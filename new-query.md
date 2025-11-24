@@ -1,3 +1,3 @@
-Great!
+Perfect!
 
-OK, now let's add independent horizontal and vertical scaling. When this option is checked, "fit" and "fill" will no longer be different. So basically we're scaling X & Y with different values, so the letter perfectly fits in both dimensions. In practice, I'm thinking we draw it at the "fill" scale, but with a canvas bigger than we need, so that it actually fits, then scale the canvas to fit, or something like that? Open to ideas.
+... Oh, except when "Independent H/V Scaling" is checked, changing the font size has no effect -- it should smoothly scale to what fraction of 100% you select (70 -> 70% of the 100 (100%) scale), like it does when "Independent H/V Scaling" is not checked.

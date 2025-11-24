@@ -90,7 +90,7 @@ function renderCanvas(text, fontSizePx, fontFamily, fontWeight) {
 }
 
 // Render text with independent horizontal and vertical scaling
-function renderCanvasWithIndependentScale(text, fontSizePx, fontFamily, fontWeight) {
+function renderCanvasWithIndependentScale(text, fontSizePx, fontFamily, fontWeight, scaleMultiplier) {
     const rect = displayCanvas.getBoundingClientRect();
     const bgColor = bgColorInput.value;
     const textColor = textColorInput.value;
@@ -109,12 +109,14 @@ function renderCanvasWithIndependentScale(text, fontSizePx, fontFamily, fontWeig
     const textWidth = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
     const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
-    // Calculate scale factors to fill both dimensions
-    const scaleX = rect.width / textWidth;
-    const scaleY = rect.height / textHeight;
+    // Calculate scale factors to fill both dimensions, then apply the multiplier
+    const baseScaleX = rect.width / textWidth;
+    const baseScaleY = rect.height / textHeight;
+    const scaleX = baseScaleX * scaleMultiplier;
+    const scaleY = baseScaleY * scaleMultiplier;
 
     log(`Independent scaling: text bbox ${textWidth.toFixed(2)}x${textHeight.toFixed(2)}px -> viewport ${rect.width.toFixed(2)}x${rect.height.toFixed(2)}px`);
-    log(`Scale factors: X=${scaleX.toFixed(4)}, Y=${scaleY.toFixed(4)}`);
+    log(`Scale factors: X=${scaleX.toFixed(4)}, Y=${scaleY.toFixed(4)} (multiplier: ${scaleMultiplier.toFixed(2)})`);
 
     // Save context state
     displayCtx.save();
@@ -524,14 +526,13 @@ function renderSlideshow() {
     // Check if independent scaling is enabled
     if (independentScaling.checked) {
         // Use a base font size for independent scaling
-        // We'll use a large base size and let the scaling handle the rest
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         const vmin = Math.min(vw, vh);
-        const baseFontSizePx = vmin * fontSizeMultiplier;
+        const baseFontSizePx = vmin; // Use a fixed base size, multiplier is applied in the scaling
 
-        log(`Independent H/V scaling enabled for "${letter}"`);
-        renderCanvasWithIndependentScale(letter, baseFontSizePx, fontFamily, fontWeight);
+        log(`Independent H/V scaling enabled for "${letter}" with multiplier ${fontSizeMultiplier.toFixed(2)}`);
+        renderCanvasWithIndependentScale(letter, baseFontSizePx, fontFamily, fontWeight, fontSizeMultiplier);
     } else {
         // Use the normal uniform scaling
         const vw = window.innerWidth;
