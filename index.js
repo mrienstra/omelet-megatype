@@ -23,6 +23,8 @@ const fillBtn = document.getElementById('fillBtn');
 const balancedBtn = document.getElementById('balancedBtn');
 const perLetterScalingControl = document.getElementById('perLetterScalingControl');
 const perLetterScaling = document.getElementById('perLetterScaling');
+const independentScalingControl = document.getElementById('independentScalingControl');
+const independentScaling = document.getElementById('independentScaling');
 const debugLogging = document.getElementById('debugLogging');
 
 let currentMode = 'static';
@@ -85,6 +87,56 @@ function renderCanvas(text, fontSizePx, fontFamily, fontWeight) {
     displayCtx.fillText(text, x, y);
 
     log(`Rendered "${text}" at (${x.toFixed(2)}, ${y.toFixed(2)}), bbox: ${textWidth.toFixed(2)}x${textHeight.toFixed(2)}px`);
+}
+
+// Render text with independent horizontal and vertical scaling
+function renderCanvasWithIndependentScale(text, fontSizePx, fontFamily, fontWeight) {
+    const rect = displayCanvas.getBoundingClientRect();
+    const bgColor = bgColorInput.value;
+    const textColor = textColorInput.value;
+
+    // Clear canvas
+    displayCtx.fillStyle = bgColor;
+    displayCtx.fillRect(0, 0, rect.width, rect.height);
+
+    // Set font
+    displayCtx.font = `${fontWeight} ${fontSizePx}px ${fontFamily}`;
+    displayCtx.fillStyle = textColor;
+    displayCtx.textBaseline = 'alphabetic';
+
+    // Measure text to get bounding box at the given font size
+    const metrics = displayCtx.measureText(text);
+    const textWidth = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
+    const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+    // Calculate scale factors to fill both dimensions
+    const scaleX = rect.width / textWidth;
+    const scaleY = rect.height / textHeight;
+
+    log(`Independent scaling: text bbox ${textWidth.toFixed(2)}x${textHeight.toFixed(2)}px -> viewport ${rect.width.toFixed(2)}x${rect.height.toFixed(2)}px`);
+    log(`Scale factors: X=${scaleX.toFixed(4)}, Y=${scaleY.toFixed(4)}`);
+
+    // Save context state
+    displayCtx.save();
+
+    // Apply non-uniform scaling
+    displayCtx.scale(scaleX, scaleY);
+
+    // Calculate position in the scaled coordinate system
+    // The center of the viewport in scaled coordinates
+    const scaledCenterX = rect.width / (2 * scaleX);
+    const scaledCenterY = rect.height / (2 * scaleY);
+
+    // Position the text so its bounding box center aligns with the viewport center
+    const x = scaledCenterX - (textWidth / 2) + metrics.actualBoundingBoxLeft;
+    const y = scaledCenterY - (textHeight / 2) + metrics.actualBoundingBoxAscent;
+
+    displayCtx.fillText(text, x, y);
+
+    // Restore context state
+    displayCtx.restore();
+
+    log(`Rendered "${text}" with independent scaling at (${x.toFixed(2)}, ${y.toFixed(2)}) in scaled coords`);
 }
 
 // Calculate optimal font size for a message (where largest char fits screen)
@@ -231,18 +283,21 @@ function setMode(mode) {
         speedControl.style.display = 'none';
         scalingModeControl.style.display = 'none';
         perLetterScalingControl.style.display = 'none';
+        independentScalingControl.style.display = 'none';
         displayArea.classList.remove('slideshow');
     } else if (mode === 'scroll') {
         scrollBtn.classList.add('active');
         speedControl.style.display = 'block';
         scalingModeControl.style.display = 'none';
         perLetterScalingControl.style.display = 'none';
+        independentScalingControl.style.display = 'none';
         displayArea.classList.remove('slideshow');
     } else if (mode === 'slideshow') {
         slideshowBtn.classList.add('active');
         speedControl.style.display = 'block';
         scalingModeControl.style.display = 'block';
         perLetterScalingControl.style.display = 'block';
+        independentScalingControl.style.display = 'block';
         displayArea.classList.add('slideshow');
     }
 
@@ -284,6 +339,14 @@ balancedBtn.addEventListener('click', () => setScalingMode('balanced'));
 perLetterScaling.addEventListener('change', () => {
     if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
         // Recalculate and re-render current letter
+        renderSlideshow();
+    }
+});
+
+// Independent scaling checkbox
+independentScaling.addEventListener('change', () => {
+    if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
+        // Re-render current letter with independent scaling
         renderSlideshow();
     }
 });
@@ -455,36 +518,49 @@ function renderSlideshow() {
     const characters = Array.from(message);
     const letter = characters[currentLetterIndex];
     const fontSizeMultiplier = fontSizeSlider.value / 100;
-
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const vmin = Math.min(vw, vh);
-    const vmax = Math.max(vw, vh);
-
-    // Calculate per-letter or use whole-message calculation
-    let letterOptimalSize, letterOptimalUnit;
-    if (perLetterScaling.checked) {
-        // Calculate optimal size for just this letter
-        letterOptimalSize = calculateOptimalFontSize(letter);
-        letterOptimalUnit = optimalFontUnit; // Set by calculateOptimalFontSize
-        log(`Per-letter scaling: "${letter}" gets its own calculation`);
-    } else {
-        // Use the pre-calculated size for the whole message
-        letterOptimalSize = optimalFontSize;
-        letterOptimalUnit = optimalFontUnit;
-    }
-
-    const finalSize = letterOptimalSize * fontSizeMultiplier;
-    const fontSizePx = letterOptimalUnit === 'vmax'
-        ? (finalSize * vmax) / 100
-        : (finalSize * vmin) / 100;
-
-    log(`Displaying "${letter}": ${finalSize.toFixed(2)}${letterOptimalUnit} = ${fontSizePx.toFixed(2)}px (optimal: ${letterOptimalSize.toFixed(2)}, multiplier: ${fontSizeMultiplier})`);
-
     const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
     const fontWeight = 'bold';
 
-    renderCanvas(letter, fontSizePx, fontFamily, fontWeight);
+    // Check if independent scaling is enabled
+    if (independentScaling.checked) {
+        // Use a base font size for independent scaling
+        // We'll use a large base size and let the scaling handle the rest
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const vmin = Math.min(vw, vh);
+        const baseFontSizePx = vmin * fontSizeMultiplier;
+
+        log(`Independent H/V scaling enabled for "${letter}"`);
+        renderCanvasWithIndependentScale(letter, baseFontSizePx, fontFamily, fontWeight);
+    } else {
+        // Use the normal uniform scaling
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const vmin = Math.min(vw, vh);
+        const vmax = Math.max(vw, vh);
+
+        // Calculate per-letter or use whole-message calculation
+        let letterOptimalSize, letterOptimalUnit;
+        if (perLetterScaling.checked) {
+            // Calculate optimal size for just this letter
+            letterOptimalSize = calculateOptimalFontSize(letter);
+            letterOptimalUnit = optimalFontUnit; // Set by calculateOptimalFontSize
+            log(`Per-letter scaling: "${letter}" gets its own calculation`);
+        } else {
+            // Use the pre-calculated size for the whole message
+            letterOptimalSize = optimalFontSize;
+            letterOptimalUnit = optimalFontUnit;
+        }
+
+        const finalSize = letterOptimalSize * fontSizeMultiplier;
+        const fontSizePx = letterOptimalUnit === 'vmax'
+            ? (finalSize * vmax) / 100
+            : (finalSize * vmin) / 100;
+
+        log(`Displaying "${letter}": ${finalSize.toFixed(2)}${letterOptimalUnit} = ${fontSizePx.toFixed(2)}px (optimal: ${letterOptimalSize.toFixed(2)}, multiplier: ${fontSizeMultiplier})`);
+
+        renderCanvas(letter, fontSizePx, fontFamily, fontWeight);
+    }
 }
 
 function startSlideshow() {

@@ -1,3 +1,3 @@
-Nice!
+Great!
 
-Let's add a "per letter" scaling option (checkbox), which calculates the scale for each letter separately, so e.g. "O" and "M" will have different scales.
+OK, now let's add independent horizontal and vertical scaling. When this option is checked, "fit" and "fill" will no longer be different. So basically we're scaling X & Y with different values, so the letter perfectly fits in both dimensions. In practice, I'm thinking we draw it at the "fill" scale, but with a canvas bigger than we need, so that it actually fits, then scale the canvas to fit, or something like that? Open to ideas.
