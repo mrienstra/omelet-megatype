@@ -18,6 +18,7 @@ const fontSizeValue = document.getElementById('fontSizeValue');
 const letterSpacingControl = document.getElementById('letterSpacingControl');
 const letterSpacingSlider = document.getElementById('letterSpacingSlider');
 const letterSpacingValue = document.getElementById('letterSpacingValue');
+const fontSelect = document.getElementById('fontSelect');
 const measurementCanvas = document.createElement('canvas');
 const measurementCtx = measurementCanvas.getContext('2d');
 const scrollCanvas = document.createElement('canvas');
@@ -40,6 +41,7 @@ let optimalFontSize = 100; // vmin value where largest char fits perfectly
 let optimalFontUnit = 'vmin'; // unit to use for optimal font size
 let scalingMode = 'fit'; // 'fit', 'fill', or 'balanced'
 let messageWideScaleFactors = { scaleX: 1, scaleY: 1 }; // For independent scaling without per-letter
+let isLoadingSettings = false; // Flag to prevent saving during initial load
 
 // Helper function for conditional logging
 function log(...args) {
@@ -180,8 +182,8 @@ function calculateOptimalFontSize(message) {
     const vmin = Math.min(vw, vh);
     const testSizePx = (testSizeVmin / 100) * vmin;
 
-    // Use system fonts with bold weight
-    const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
+    // Use selected font with bold weight
+    const fontFamily = fontSelect.value;
     const fontWeight = 'bold';
 
     // Set canvas font - need to use pixel size for measurement
@@ -274,6 +276,7 @@ speedSlider.addEventListener('input', () => {
     if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
         startSlideshow(); // Restart with new speed
     }
+    saveSettings();
 });
 
 // Update font size display
@@ -282,6 +285,7 @@ fontSizeSlider.addEventListener('input', () => {
     if (displayArea.classList.contains('active')) {
         updateDisplay();
     }
+    saveSettings();
 });
 
 // Update letter spacing display
@@ -290,6 +294,18 @@ letterSpacingSlider.addEventListener('input', () => {
     if (displayArea.classList.contains('active') && currentMode === 'scroll') {
         prepareScrollCanvas();
     }
+    saveSettings();
+});
+
+// Font selection
+fontSelect.addEventListener('change', () => {
+    if (displayArea.classList.contains('active')) {
+        // Recalculate optimal size for new font
+        const message = messageInput.value || 'OMELET';
+        optimalFontSize = calculateOptimalFontSize(message);
+        updateDisplay();
+    }
+    saveSettings();
 });
 
 // Mode buttons
@@ -326,6 +342,7 @@ function setMode(mode) {
     if (displayArea.classList.contains('active')) {
         updateDisplay();
     }
+    saveSettings();
 }
 
 staticBtn.addEventListener('click', () => setMode('static'));
@@ -353,6 +370,7 @@ function setScalingMode(mode) {
             prepareScrollCanvas();
         }
     }
+    saveSettings();
 }
 
 fitBtn.addEventListener('click', () => setScalingMode('fit'));
@@ -367,6 +385,7 @@ perLetterScaling.addEventListener('change', () => {
             prepareScrollCanvas();
         }
     }
+    saveSettings();
 });
 
 // Independent scaling checkbox
@@ -378,6 +397,7 @@ independentScaling.addEventListener('change', () => {
             prepareScrollCanvas();
         }
     }
+    saveSettings();
 });
 
 // Color controls
@@ -391,6 +411,7 @@ textColorInput.addEventListener('input', () => {
         }
         // Scroll mode continuously redraws, so no action needed
     }
+    saveSettings();
 });
 
 bgColorInput.addEventListener('input', () => {
@@ -403,6 +424,7 @@ bgColorInput.addEventListener('input', () => {
         }
         // Scroll mode continuously redraws, so no action needed
     }
+    saveSettings();
 });
 
 // Show/hide display
@@ -477,7 +499,7 @@ function renderStatic(message) {
     const vmin = Math.min(vw, vh);
 
     const fontSizePx = (baseFontSize * vmin * fontSizeMultiplier * 2.5) / 100;
-    const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
+    const fontFamily = fontSelect.value;
     const fontWeight = 'bold';
 
     renderCanvas(message, fontSizePx, fontFamily, fontWeight);
@@ -498,7 +520,7 @@ function calculateBaseFontSize(text) {
 function prepareScrollCanvas() {
     const message = messageInput.value || 'OMELET';
     const fontSizeMultiplier = fontSizeSlider.value / 100;
-    const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
+    const fontFamily = fontSelect.value;
     const fontWeight = 'bold';
     const letterSpacing = parseInt(letterSpacingSlider.value);
 
@@ -685,7 +707,7 @@ function renderSlideshow() {
     const characters = Array.from(message);
     const letter = characters[currentLetterIndex];
     const fontSizeMultiplier = fontSizeSlider.value / 100;
-    const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
+    const fontFamily = fontSelect.value;
     const fontWeight = 'bold';
 
     const vw = window.innerWidth;
@@ -801,6 +823,12 @@ messageInput.addEventListener('input', () => {
         }
         updateDisplay();
     }
+    saveSettings();
+});
+
+// Debug logging checkbox
+debugLogging.addEventListener('change', () => {
+    saveSettings();
 });
 
 // Initialize with static mode
@@ -817,3 +845,65 @@ window.addEventListener('resize', () => {
         }, 250);
     }
 });
+
+// LocalStorage persistence
+function saveSettings() {
+    if (isLoadingSettings) return; // Don't save while loading
+
+    const settings = {
+        message: messageInput.value,
+        mode: currentMode,
+        textColor: textColorInput.value,
+        bgColor: bgColorInput.value,
+        speed: speedSlider.value,
+        fontSize: fontSizeSlider.value,
+        letterSpacing: letterSpacingSlider.value,
+        font: fontSelect.value,
+        scalingMode: scalingMode,
+        perLetterScaling: perLetterScaling.checked,
+        independentScaling: independentScaling.checked,
+        debugLogging: debugLogging.checked
+    };
+    localStorage.setItem('omeletSettings', JSON.stringify(settings));
+}
+
+function loadSettings() {
+    const savedSettings = localStorage.getItem('omeletSettings');
+    if (!savedSettings) return;
+
+    try {
+        isLoadingSettings = true; // Prevent saving during load
+
+        const settings = JSON.parse(savedSettings);
+
+        // Restore values
+        if (settings.message) messageInput.value = settings.message;
+        if (settings.textColor) textColorInput.value = settings.textColor;
+        if (settings.bgColor) bgColorInput.value = settings.bgColor;
+        if (settings.speed) {
+            speedSlider.value = settings.speed;
+            speedValue.textContent = settings.speed;
+        }
+        if (settings.fontSize) {
+            fontSizeSlider.value = settings.fontSize;
+            fontSizeValue.textContent = settings.fontSize;
+        }
+        if (settings.letterSpacing !== undefined) {
+            letterSpacingSlider.value = settings.letterSpacing;
+            letterSpacingValue.textContent = settings.letterSpacing;
+        }
+        if (settings.font) fontSelect.value = settings.font;
+        if (settings.scalingMode) setScalingMode(settings.scalingMode);
+        if (settings.perLetterScaling !== undefined) perLetterScaling.checked = settings.perLetterScaling;
+        if (settings.independentScaling !== undefined) independentScaling.checked = settings.independentScaling;
+        if (settings.debugLogging !== undefined) debugLogging.checked = settings.debugLogging;
+        if (settings.mode) setMode(settings.mode);
+    } catch (e) {
+        console.error('Failed to load settings:', e);
+    } finally {
+        isLoadingSettings = false; // Re-enable saving
+    }
+}
+
+// Load settings on startup
+loadSettings();

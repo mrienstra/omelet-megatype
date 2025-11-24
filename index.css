@@ -27,7 +27,7 @@ label {
     color: #333;
 }
 
-input[type="text"], textarea {
+input[type="text"], textarea, select {
     width: 100%;
     padding: 10px;
     border: 1px solid #ddd;
@@ -38,6 +38,11 @@ input[type="text"], textarea {
 textarea {
     min-height: 60px;
     resize: vertical;
+}
+
+select {
+    background-color: white;
+    cursor: pointer;
 }
 
 .color-controls {
