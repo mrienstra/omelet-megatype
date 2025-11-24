@@ -20,7 +20,6 @@ const measurementCtx = measurementCanvas.getContext('2d');
 const scalingModeControl = document.getElementById('scalingModeControl');
 const fitBtn = document.getElementById('fitBtn');
 const fillBtn = document.getElementById('fillBtn');
-const balancedBtn = document.getElementById('balancedBtn');
 const perLetterScalingControl = document.getElementById('perLetterScalingControl');
 const perLetterScaling = document.getElementById('perLetterScaling');
 const independentScalingControl = document.getElementById('independentScalingControl');
@@ -229,16 +228,11 @@ function calculateOptimalFontSize(message) {
         constraintRatio = Math.max(widthRatio, heightRatio);
         unit = 'vmin';
         log(`FIT mode: constrained by ${widthRatio > heightRatio ? 'WIDTH' : 'HEIGHT'}`);
-    } else if (scalingMode === 'fill') {
+    } else { // 'fill'
         // Fill: constrained by whichever dimension hits the edge last (the smaller ratio)
         constraintRatio = Math.min(widthRatio, heightRatio);
         unit = 'vmax';
         log(`FILL mode: constrained by ${widthRatio < heightRatio ? 'WIDTH' : 'HEIGHT'}`);
-    } else { // 'balanced'
-        // Average of both dimensions
-        constraintRatio = (widthRatio + heightRatio) / 2;
-        unit = 'vmin';
-        log('BALANCED mode: using average of both dimensions');
     }
 
     log(`Constraint ratio: ${constraintRatio.toFixed(4)}`);
@@ -300,9 +294,9 @@ function setMode(mode) {
     } else if (mode === 'scroll') {
         scrollBtn.classList.add('active');
         speedControl.style.display = 'block';
-        scalingModeControl.style.display = 'none';
-        perLetterScalingControl.style.display = 'none';
-        independentScalingControl.style.display = 'none';
+        scalingModeControl.style.display = 'block';
+        perLetterScalingControl.style.display = 'block';
+        independentScalingControl.style.display = 'block';
         displayArea.classList.remove('slideshow');
     } else if (mode === 'slideshow') {
         slideshowBtn.classList.add('active');
@@ -325,41 +319,48 @@ slideshowBtn.addEventListener('click', () => setMode('slideshow'));
 // Scaling mode buttons
 function setScalingMode(mode) {
     scalingMode = mode;
-    [fitBtn, fillBtn, balancedBtn].forEach(btn => btn.classList.remove('active'));
-    
+    [fitBtn, fillBtn].forEach(btn => btn.classList.remove('active'));
+
     if (mode === 'fit') {
         fitBtn.classList.add('active');
     } else if (mode === 'fill') {
         fillBtn.classList.add('active');
-    } else if (mode === 'balanced') {
-        balancedBtn.classList.add('active');
     }
-    
-    // Recalculate if in slideshow mode and display is active
-    if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
+
+    // Recalculate if display is active and in a mode that uses scaling
+    if (displayArea.classList.contains('active') && (currentMode === 'slideshow' || currentMode === 'scroll')) {
         const message = messageInput.value || 'OMELET';
         optimalFontSize = calculateOptimalFontSize(message);
-        renderSlideshow();
+        if (currentMode === 'slideshow') {
+            renderSlideshow();
+        } else if (currentMode === 'scroll') {
+            renderScroll();
+        }
     }
 }
 
 fitBtn.addEventListener('click', () => setScalingMode('fit'));
 fillBtn.addEventListener('click', () => setScalingMode('fill'));
-balancedBtn.addEventListener('click', () => setScalingMode('balanced'));
 
 // Per-letter scaling checkbox
 perLetterScaling.addEventListener('change', () => {
-    if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
-        // Recalculate and re-render current letter
-        renderSlideshow();
+    if (displayArea.classList.contains('active') && (currentMode === 'slideshow' || currentMode === 'scroll')) {
+        if (currentMode === 'slideshow') {
+            renderSlideshow();
+        } else if (currentMode === 'scroll') {
+            renderScroll();
+        }
     }
 });
 
 // Independent scaling checkbox
 independentScaling.addEventListener('change', () => {
-    if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
-        // Re-render current letter with independent scaling
-        renderSlideshow();
+    if (displayArea.classList.contains('active') && (currentMode === 'slideshow' || currentMode === 'scroll')) {
+        if (currentMode === 'slideshow') {
+            renderSlideshow();
+        } else if (currentMode === 'scroll') {
+            renderScroll();
+        }
     }
 });
 
@@ -440,6 +441,7 @@ function updateDisplay() {
     if (currentMode === 'static') {
         renderStatic(message);
     } else if (currentMode === 'scroll') {
+        optimalFontSize = calculateOptimalFontSize(message);
         scrollOffset = 0;
         renderScroll();
     } else if (currentMode === 'slideshow') {
@@ -478,13 +480,13 @@ function calculateBaseFontSize(text) {
 function renderScroll() {
     const message = messageInput.value || 'OMELET';
     const fontSizeMultiplier = fontSizeSlider.value / 100;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const vmin = Math.min(vw, vh);
-    const fontSizePx = (15 * vmin * fontSizeMultiplier * 2.5) / 100;
     const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
     const fontWeight = 'bold';
 
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const vmin = Math.min(vw, vh);
+    const vmax = Math.max(vw, vh);
     const rect = displayCanvas.getBoundingClientRect();
     const bgColor = bgColorInput.value;
     const textColor = textColorInput.value;
@@ -493,29 +495,119 @@ function renderScroll() {
     displayCtx.fillStyle = bgColor;
     displayCtx.fillRect(0, 0, rect.width, rect.height);
 
-    // Set font and measure text
-    displayCtx.font = `${fontWeight} ${fontSizePx}px ${fontFamily}`;
-    displayCtx.fillStyle = textColor;
-    displayCtx.textBaseline = 'middle';
-
-    const metrics = displayCtx.measureText(message);
-    const textWidth = metrics.width;
-
     // Calculate scroll speed based on slider
     const speed = speedSlider.value;
-    const pixelsPerFrame = speed * 0.5; // Adjust speed multiplier as needed
+    const pixelsPerFrame = speed * 0.5;
 
-    // Draw text scrolling from right to left
-    const x = rect.width - scrollOffset;
-    const y = rect.height / 2;
+    // Calculate message-wide scale factors if needed (for independent scaling without per-letter)
+    let sharedScaleFactors = null;
+    if (independentScaling.checked && !perLetterScaling.checked) {
+        const baseFontSizePx = optimalFontUnit === 'vmax'
+            ? (optimalFontSize * vmax) / 100
+            : (optimalFontSize * vmin) / 100;
 
-    displayCtx.fillText(message, x, y);
+        const uniqueChars = [...new Set(Array.from(message))];
+        measurementCtx.font = `${fontWeight} ${baseFontSizePx}px ${fontFamily}`;
+
+        let maxWidth = 0;
+        let maxHeight = 0;
+
+        uniqueChars.forEach(char => {
+            const metrics = measurementCtx.measureText(char);
+            const width = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
+            const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+            maxWidth = Math.max(maxWidth, width);
+            maxHeight = Math.max(maxHeight, height);
+        });
+
+        const baseScaleX = rect.height / maxWidth; // Using height for horizontal scrolling
+        const baseScaleY = rect.height / maxHeight;
+        sharedScaleFactors = { scaleX: baseScaleX, scaleY: baseScaleY };
+    }
+
+    // Render each character with appropriate positioning
+    const characters = Array.from(message);
+    let currentX = rect.width - scrollOffset;
+    let totalWidth = 0;
+
+    characters.forEach((char, index) => {
+        // Determine size for this character
+        let charFontSizePx;
+        let charOptimalUnit = optimalFontUnit;
+
+        if (perLetterScaling.checked) {
+            // Calculate optimal size for this specific character
+            const charOptimalSize = calculateOptimalFontSize(char);
+            charOptimalUnit = optimalFontUnit;
+            charFontSizePx = charOptimalUnit === 'vmax'
+                ? (charOptimalSize * vmax) / 100
+                : (charOptimalSize * vmin) / 100;
+        } else {
+            // Use message-wide optimal size
+            charFontSizePx = optimalFontUnit === 'vmax'
+                ? (optimalFontSize * vmax) / 100
+                : (optimalFontSize * vmin) / 100;
+        }
+
+        // Measure character at its font size
+        measurementCtx.font = `${fontWeight} ${charFontSizePx}px ${fontFamily}`;
+        const metrics = measurementCtx.measureText(char);
+        const charWidth = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
+        const charHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+        // Calculate scale factors if using independent scaling
+        let scaleX, scaleY;
+        if (independentScaling.checked) {
+            if (sharedScaleFactors) {
+                // Use shared scale factors (message-wide)
+                scaleX = sharedScaleFactors.scaleX * fontSizeMultiplier;
+                scaleY = sharedScaleFactors.scaleY * fontSizeMultiplier;
+            } else {
+                // Calculate per-character scale factors
+                scaleX = (rect.height / charWidth) * fontSizeMultiplier;
+                scaleY = (rect.height / charHeight) * fontSizeMultiplier;
+            }
+        } else {
+            // Uniform scaling - scale to fit height
+            const scale = (rect.height / charHeight) * fontSizeMultiplier;
+            scaleX = scale;
+            scaleY = scale;
+        }
+
+        // Calculate scaled width for positioning
+        const scaledWidth = charWidth * scaleX;
+
+        // Only draw if character is visible on screen
+        if (currentX + scaledWidth > 0 && currentX < rect.width) {
+            displayCtx.save();
+
+            // Move to character position and apply scaling
+            displayCtx.translate(currentX, rect.height / 2);
+            displayCtx.scale(scaleX, scaleY);
+
+            // Set font and color
+            displayCtx.font = `${fontWeight} ${charFontSizePx}px ${fontFamily}`;
+            displayCtx.fillStyle = textColor;
+            displayCtx.textBaseline = 'alphabetic';
+
+            // Draw character centered in scaled space
+            const x = (charWidth / 2) - metrics.actualBoundingBoxLeft;
+            const y = (charHeight / 2) - metrics.actualBoundingBoxDescent;
+            displayCtx.fillText(char, -x, y);
+
+            displayCtx.restore();
+        }
+
+        // Move to next character position
+        currentX += scaledWidth;
+        totalWidth += scaledWidth;
+    });
 
     // Update scroll offset
     scrollOffset += pixelsPerFrame;
 
-    // Reset when text has completely scrolled off screen
-    if (scrollOffset > rect.width + textWidth) {
+    // Reset when all text has scrolled off screen
+    if (scrollOffset > rect.width + totalWidth) {
         scrollOffset = 0;
     }
 
@@ -637,6 +729,10 @@ messageInput.addEventListener('input', () => {
             if (currentLetterIndex >= characters.length) {
                 currentLetterIndex = 0;
             }
+            // Recalculate optimal size for new message
+            optimalFontSize = calculateOptimalFontSize(message);
+        } else if (currentMode === 'scroll') {
+            const message = messageInput.value || 'OMELET';
             // Recalculate optimal size for new message
             optimalFontSize = calculateOptimalFontSize(message);
         }
