@@ -14,7 +14,6 @@ const controls = document.getElementById('controls');
 const speedControl = document.getElementById('speedControl');
 const fontSizeSlider = document.getElementById('fontSizeSlider');
 const fontSizeValue = document.getElementById('fontSizeValue');
-const measurementDiv = document.getElementById('measurementDiv');
 const measurementCanvas = document.createElement('canvas');
 const measurementCtx = measurementCanvas.getContext('2d');
 const scalingModeControl = document.getElementById('scalingModeControl');
@@ -136,7 +135,15 @@ function calculateOptimalFontSize(message) {
     // Calculate what font size would make the largest char fit edge-to-edge
     if (constraintRatio > 0) {
         const targetRatio = 1.0; // 100% of viewport (edge-to-edge)
-        const optimalSize = (testSizeVmin * targetRatio) / constraintRatio;
+        let optimalSize = (testSizeVmin * targetRatio) / constraintRatio;
+
+        // Convert from vmin to vmax if needed (we measured in vmin units)
+        if (unit === 'vmax') {
+            const vmax = Math.max(vw, vh);
+            optimalSize = optimalSize * (vmin / vmax);
+            log(`Converted from ${((testSizeVmin * targetRatio) / constraintRatio).toFixed(2)}vmin to ${optimalSize.toFixed(2)}vmax`);
+        }
+
         log(`Optimal font size: ${optimalSize.toFixed(2)}${unit} (at 100%)`);
         log('===================================\n');
         return optimalSize;
