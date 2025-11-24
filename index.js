@@ -602,6 +602,9 @@ function prepareScrollCanvas() {
     // Set up scroll canvas size
     scrollCanvas.width = (totalWidth + rect.width) * dpr;
     scrollCanvas.height = rect.height * dpr;
+
+    // Reset transform and apply DPR scaling
+    scrollCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity
     scrollCtx.scale(dpr, dpr);
 
     // Clear scroll canvas
@@ -618,9 +621,12 @@ function prepareScrollCanvas() {
         scrollCtx.fillStyle = textColorInput.value;
         scrollCtx.textBaseline = 'alphabetic';
 
-        const x = (data.charWidth / 2) - data.metrics.actualBoundingBoxLeft;
-        const y = (data.charHeight / 2) - data.metrics.actualBoundingBoxDescent;
-        scrollCtx.fillText(data.char, -x, y);
+        // Center the text at the origin
+        // For alphabetic baseline: center_y = baseline_y + (descent - ascent) / 2
+        // We want center at 0, so: baseline_y = (ascent - descent) / 2
+        const xOffset = (data.charWidth / 2) - data.metrics.actualBoundingBoxLeft;
+        const yOffset = (data.metrics.actualBoundingBoxAscent - data.metrics.actualBoundingBoxDescent) / 2;
+        scrollCtx.fillText(data.char, -xOffset, yOffset);
 
         scrollCtx.restore();
     });
@@ -637,6 +643,7 @@ function renderScroll() {
     displayCtx.fillRect(0, 0, rect.width, rect.height);
 
     // Draw scroll canvas at offset
+    // Start text from the right side of the screen and scroll left
     displayCtx.drawImage(scrollCanvas, rect.width - scrollOffset, 0);
 
     // Calculate scroll speed based on slider
