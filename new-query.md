@@ -1,4 +1,4 @@
-that fixed the "left side of first letter cut off" issue, but not the vertical alignment issue.
+No change visually, console output:
 
 Canvas setup: 390x660 CSS, 780x1320 physical (DPR: 2)
 === CALCULATING OPTIMAL FONT SIZE (Canvas) ===
@@ -26,19 +26,25 @@ Scroll canvas: 4311x1320 physical (2155.6657247543335x660 CSS), DPR: 2
 Viewport height: 660, center Y: 330
 "O": translate(0.00, 330.00), scale(1.00, 1.00)
   bbox: 356.33x382.19, left: -19.07, ascent: 375.79, descent: 6.40
-  draw at (-19.07, 184.69) - left edge at 0, v-centered
+  baseline at y=184.69, top=-191.09, bottom=191.09, center=0.00
+  canvas position: top=138.91, bottom=521.09, center=330.00
 "M": translate(356.33, 330.00), scale(1.00, 1.00)
   bbox: 390.00x369.39, left: -30.72, ascent: 369.39, descent: 0.00
-  draw at (-30.72, 184.69) - left edge at 0, v-centered
+  baseline at y=184.69, top=-184.69, bottom=184.69, center=0.00
+  canvas position: top=145.31, bottom=514.69, center=330.00
 "E": translate(746.33, 330.00), scale(1.00, 1.00)
   bbox: 244.72x369.39, left: -30.72, ascent: 369.39, descent: 0.00
-  draw at (-30.72, 184.69) - left edge at 0, v-centered
+  baseline at y=184.69, top=-184.69, bottom=184.69, center=0.00
+  canvas position: top=145.31, bottom=514.69, center=330.00
 "L": translate(991.05, 330.00), scale(1.00, 1.00)
   bbox: 238.84x369.39, left: -30.72, ascent: 369.39, descent: 0.00
-  draw at (-30.72, 184.69) - left edge at 0, v-centered
+  baseline at y=184.69, top=-184.69, bottom=184.69, center=0.00
+  canvas position: top=145.31, bottom=514.69, center=330.00
 "E": translate(1229.89, 330.00), scale(1.00, 1.00)
   bbox: 244.72x369.39, left: -30.72, ascent: 369.39, descent: 0.00
-  draw at (-30.72, 184.69) - left edge at 0, v-centered
+  baseline at y=184.69, top=-184.69, bottom=184.69, center=0.00
+  canvas position: top=145.31, bottom=514.69, center=330.00
 "T": translate(1474.61, 330.00), scale(1.00, 1.00)
   bbox: 291.06x369.39, left: -12.16, ascent: 369.39, descent: 0.00
-  draw at (-12.16, 184.69) - left edge at 0, v-centered
+  baseline at y=184.69, top=-184.69, bottom=184.69, center=0.00
+  canvas position: top=145.31, bottom=514.69, center=330.00

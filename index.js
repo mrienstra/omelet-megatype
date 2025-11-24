@@ -629,15 +629,22 @@ function prepareScrollCanvas() {
         // For x: we want the left edge of the bounding box at 0
         const x = data.metrics.actualBoundingBoxLeft;
 
-        // For y: we want the vertical center at 0
-        // With alphabetic baseline, top is at (y - ascent), bottom at (y + descent)
-        // Center at: (top + bottom) / 2 = ((y - ascent) + (y + descent)) / 2 = y + (descent - ascent) / 2
-        // We want center at 0, so: y = (ascent - descent) / 2
+        // For y: we've already translated to the vertical center, so we need the baseline position
+        // that centers the text at y=0
+        // Top of text: y - ascent, Bottom: y + descent
+        // For center at 0: (y - ascent + y + descent) / 2 = 0
+        // So: y = (ascent - descent) / 2
         const y = (data.metrics.actualBoundingBoxAscent - data.metrics.actualBoundingBoxDescent) / 2;
+
+        // After scaling, actual positions:
+        const actualTop = y - data.metrics.actualBoundingBoxAscent;
+        const actualBottom = y + data.metrics.actualBoundingBoxDescent;
+        const actualCenter = (actualTop + actualBottom) / 2;
 
         log(`"${data.char}": translate(${data.x.toFixed(2)}, ${translateY.toFixed(2)}), scale(${data.scaleX.toFixed(2)}, ${data.scaleY.toFixed(2)})`);
         log(`  bbox: ${data.charWidth.toFixed(2)}x${data.charHeight.toFixed(2)}, left: ${data.metrics.actualBoundingBoxLeft.toFixed(2)}, ascent: ${data.metrics.actualBoundingBoxAscent.toFixed(2)}, descent: ${data.metrics.actualBoundingBoxDescent.toFixed(2)}`);
-        log(`  draw at (${x.toFixed(2)}, ${y.toFixed(2)}) - left edge at 0, v-centered`);
+        log(`  baseline at y=${y.toFixed(2)}, top=${actualTop.toFixed(2)}, bottom=${actualBottom.toFixed(2)}, center=${actualCenter.toFixed(2)}`)
+        log(`  canvas position: top=${(translateY + actualTop * data.scaleY).toFixed(2)}, bottom=${(translateY + actualBottom * data.scaleY).toFixed(2)}, center=${(translateY + actualCenter * data.scaleY).toFixed(2)}`);
 
         scrollCtx.fillText(data.char, x, y);
 
