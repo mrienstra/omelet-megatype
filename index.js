@@ -603,9 +603,6 @@ function prepareScrollCanvas() {
     scrollCanvas.width = (totalWidth + rect.width) * dpr;
     scrollCanvas.height = rect.height * dpr;
 
-    log(`Scroll canvas: ${scrollCanvas.width}x${scrollCanvas.height} physical (${totalWidth + rect.width}x${rect.height} CSS), DPR: ${dpr}`);
-    log(`Viewport height: ${rect.height}, center Y: ${rect.height / 2}`);
-
     // Reset transform and apply DPR scaling
     scrollCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity
     scrollCtx.scale(dpr, dpr);
@@ -636,16 +633,6 @@ function prepareScrollCanvas() {
         // So: y = (ascent - descent) / 2
         const y = (data.metrics.actualBoundingBoxAscent - data.metrics.actualBoundingBoxDescent) / 2;
 
-        // After scaling, actual positions:
-        const actualTop = y - data.metrics.actualBoundingBoxAscent;
-        const actualBottom = y + data.metrics.actualBoundingBoxDescent;
-        const actualCenter = (actualTop + actualBottom) / 2;
-
-        log(`"${data.char}": translate(${data.x.toFixed(2)}, ${translateY.toFixed(2)}), scale(${data.scaleX.toFixed(2)}, ${data.scaleY.toFixed(2)})`);
-        log(`  bbox: ${data.charWidth.toFixed(2)}x${data.charHeight.toFixed(2)}, left: ${data.metrics.actualBoundingBoxLeft.toFixed(2)}, ascent: ${data.metrics.actualBoundingBoxAscent.toFixed(2)}, descent: ${data.metrics.actualBoundingBoxDescent.toFixed(2)}`);
-        log(`  baseline at y=${y.toFixed(2)}, top=${actualTop.toFixed(2)}, bottom=${actualBottom.toFixed(2)}, center=${actualCenter.toFixed(2)}`)
-        log(`  canvas position: top=${(translateY + actualTop * data.scaleY).toFixed(2)}, bottom=${(translateY + actualBottom * data.scaleY).toFixed(2)}, center=${(translateY + actualCenter * data.scaleY).toFixed(2)}`);
-
         scrollCtx.fillText(data.char, x, y);
 
         scrollCtx.restore();
@@ -657,6 +644,7 @@ function prepareScrollCanvas() {
 function renderScroll() {
     const rect = displayCanvas.getBoundingClientRect();
     const bgColor = bgColorInput.value;
+    const dpr = window.devicePixelRatio || 1;
 
     // Clear display canvas
     displayCtx.fillStyle = bgColor;
@@ -664,7 +652,14 @@ function renderScroll() {
 
     // Draw scroll canvas at offset
     // Start text from the right side of the screen and scroll left
-    displayCtx.drawImage(scrollCanvas, rect.width - scrollOffset, 0);
+    // Specify destination dimensions in CSS pixels to account for DPR scaling on displayCtx
+    const scrollCanvasWidthCSS = scrollCanvas.width / dpr;
+    const scrollCanvasHeightCSS = scrollCanvas.height / dpr;
+    displayCtx.drawImage(
+        scrollCanvas,
+        rect.width - scrollOffset, 0,  // destination x, y in CSS space
+        scrollCanvasWidthCSS, scrollCanvasHeightCSS  // destination width, height in CSS space
+    );
 
     // Calculate scroll speed based on slider
     const speed = speedSlider.value;
