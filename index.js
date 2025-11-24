@@ -1,6 +1,7 @@
 const messageInput = document.getElementById('messageInput');
 const displayArea = document.getElementById('displayArea');
-const displayText = document.getElementById('displayText');
+const displayCanvas = document.getElementById('displayCanvas');
+const displayCtx = displayCanvas.getContext('2d');
 const staticBtn = document.getElementById('staticBtn');
 const scrollBtn = document.getElementById('scrollBtn');
 const slideshowBtn = document.getElementById('slideshowBtn');
@@ -25,6 +26,8 @@ const debugLogging = document.getElementById('debugLogging');
 let currentMode = 'static';
 let currentLetterIndex = 0;
 let slideshowInterval = null;
+let scrollAnimationId = null;
+let scrollOffset = 0;
 let optimalFontSize = 100; // vmin value where largest char fits perfectly
 let optimalFontUnit = 'vmin'; // unit to use for optimal font size
 let scalingMode = 'fit'; // 'fit', 'fill', or 'balanced'
@@ -34,6 +37,52 @@ function log(...args) {
     if (debugLogging.checked) {
         console.log(...args);
     }
+}
+
+// Setup canvas with proper pixel density
+function setupCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = displayCanvas.getBoundingClientRect();
+
+    displayCanvas.width = rect.width * dpr;
+    displayCanvas.height = rect.height * dpr;
+
+    displayCtx.scale(dpr, dpr);
+
+    log(`Canvas setup: ${rect.width}x${rect.height} CSS, ${displayCanvas.width}x${displayCanvas.height} physical (DPR: ${dpr})`);
+}
+
+// Render text on canvas with perfect centering
+function renderCanvas(text, fontSizePx, fontFamily, fontWeight) {
+    const rect = displayCanvas.getBoundingClientRect();
+    const bgColor = bgColorInput.value;
+    const textColor = textColorInput.value;
+
+    // Clear canvas
+    displayCtx.fillStyle = bgColor;
+    displayCtx.fillRect(0, 0, rect.width, rect.height);
+
+    // Set font
+    displayCtx.font = `${fontWeight} ${fontSizePx}px ${fontFamily}`;
+    displayCtx.fillStyle = textColor;
+    displayCtx.textBaseline = 'alphabetic';
+
+    // Measure text to get bounding box
+    const metrics = displayCtx.measureText(text);
+    const textWidth = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
+    const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+    // Calculate position to center the actual bounding box (not the baseline)
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    // Position so the bounding box center aligns with canvas center
+    const x = centerX - (textWidth / 2) + metrics.actualBoundingBoxLeft;
+    const y = centerY - (textHeight / 2) + metrics.actualBoundingBoxAscent;
+
+    displayCtx.fillText(text, x, y);
+
+    log(`Rendered "${text}" at (${x.toFixed(2)}, ${y.toFixed(2)}), bbox: ${textWidth.toFixed(2)}x${textHeight.toFixed(2)}px`);
 }
 
 // Calculate optimal font size for a message (where largest char fits screen)
@@ -61,10 +110,9 @@ function calculateOptimalFontSize(message) {
     const vmin = Math.min(vw, vh);
     const testSizePx = (testSizeVmin / 100) * vmin;
 
-    // Get computed font family from the display element
-    const computedStyle = window.getComputedStyle(displayText);
-    const fontFamily = computedStyle.fontFamily || 'sans-serif';
-    const fontWeight = computedStyle.fontWeight || 'bold';
+    // Use system fonts with bold weight
+    const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
+    const fontWeight = 'bold';
 
     // Set canvas font - need to use pixel size for measurement
     measurementCtx.font = `${fontWeight} ${testSizePx}px ${fontFamily}`;
@@ -157,9 +205,8 @@ function calculateOptimalFontSize(message) {
 // Update speed display
 speedSlider.addEventListener('input', () => {
     speedValue.textContent = speedSlider.value;
-    if (currentMode === 'scroll') {
-        updateScrollSpeed();
-    } else if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
+    // Scroll animation speed is handled automatically in renderScroll
+    if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
         startSlideshow(); // Restart with new speed
     }
 });
@@ -229,13 +276,29 @@ fillBtn.addEventListener('click', () => setScalingMode('fill'));
 balancedBtn.addEventListener('click', () => setScalingMode('balanced'));
 
 // Color controls
-textColorInput.addEventListener('input', updateColors);
-bgColorInput.addEventListener('input', updateColors);
+textColorInput.addEventListener('input', () => {
+    if (displayArea.classList.contains('active')) {
+        // Re-render current mode
+        if (currentMode === 'static') {
+            renderStatic(messageInput.value || 'OMELET');
+        } else if (currentMode === 'slideshow') {
+            renderSlideshow();
+        }
+        // Scroll mode continuously redraws, so no action needed
+    }
+});
 
-function updateColors() {
-    displayArea.style.color = textColorInput.value;
-    displayArea.style.background = bgColorInput.value;
-}
+bgColorInput.addEventListener('input', () => {
+    if (displayArea.classList.contains('active')) {
+        // Re-render current mode
+        if (currentMode === 'static') {
+            renderStatic(messageInput.value || 'OMELET');
+        } else if (currentMode === 'slideshow') {
+            renderSlideshow();
+        }
+        // Scroll mode continuously redraws, so no action needed
+    }
+});
 
 // Show/hide display
 showBtn.addEventListener('click', () => {
@@ -253,91 +316,164 @@ function showDisplay() {
     controls.style.display = 'none';
     showBtn.textContent = 'Hide Display';
     updateDisplay();
-    updateColors();
 }
 
 function hideDisplay() {
     displayArea.classList.remove('active');
     controls.style.display = 'block';
     showBtn.textContent = 'Show Display';
+
+    // Stop all animations
     if (slideshowInterval) {
         clearInterval(slideshowInterval);
         slideshowInterval = null;
+    }
+    if (scrollAnimationId) {
+        cancelAnimationFrame(scrollAnimationId);
+        scrollAnimationId = null;
     }
 }
 
 function updateDisplay() {
     const message = messageInput.value || 'OMELET';
-    const fontSizeMultiplier = fontSizeSlider.value / 100; // 0.01 to 2.0
-    
+
+    // Stop any ongoing animations
+    if (scrollAnimationId) {
+        cancelAnimationFrame(scrollAnimationId);
+        scrollAnimationId = null;
+    }
+    if (slideshowInterval) {
+        clearInterval(slideshowInterval);
+        slideshowInterval = null;
+    }
+
+    setupCanvas();
+
     if (currentMode === 'static') {
-        displayText.innerHTML = message;
-        const baseFontSize = calculateBaseFontSize(message);
-        displayText.style.fontSize = `calc(${baseFontSize} * ${fontSizeMultiplier * 2.5})`;
-        displayText.className = 'display-text';
+        renderStatic(message);
     } else if (currentMode === 'scroll') {
-        displayText.innerHTML = `<div class="scrolling-container"><div class="scrolling-text">${message}</div></div>`;
-        displayText.style.fontSize = `calc(15vmin * ${fontSizeMultiplier * 2.5})`;
-        displayText.className = 'display-text';
-        updateScrollSpeed();
+        scrollOffset = 0;
+        renderScroll();
     } else if (currentMode === 'slideshow') {
-        // Calculate optimal size for this message
         optimalFontSize = calculateOptimalFontSize(message);
         currentLetterIndex = 0;
-        updateSlideshowLetter(message);
-        startSlideshow(); // Auto-start slideshow
+        renderSlideshow();
+        startSlideshow();
     }
+}
+
+function renderStatic(message) {
+    const fontSizeMultiplier = fontSizeSlider.value / 100;
+    const baseFontSize = calculateBaseFontSize(message);
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const vmin = Math.min(vw, vh);
+
+    const fontSizePx = (baseFontSize * vmin * fontSizeMultiplier * 2.5) / 100;
+    const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
+    const fontWeight = 'bold';
+
+    renderCanvas(message, fontSizePx, fontFamily, fontWeight);
 }
 
 function calculateBaseFontSize(text) {
     const length = text.length;
-    if (length <= 3) return '35vmin';
-    if (length <= 6) return '25vmin';
-    if (length <= 10) return '18vmin';
-    if (length <= 15) return '12vmin';
-    if (length <= 25) return '10vmin';
-    if (length <= 40) return '7vmin';
-    return '5vmin';
+    if (length <= 3) return 35;
+    if (length <= 6) return 25;
+    if (length <= 10) return 18;
+    if (length <= 15) return 12;
+    if (length <= 25) return 10;
+    if (length <= 40) return 7;
+    return 5;
 }
 
-function updateScrollSpeed() {
+function renderScroll() {
+    const message = messageInput.value || 'OMELET';
+    const fontSizeMultiplier = fontSizeSlider.value / 100;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const vmin = Math.min(vw, vh);
+    const fontSizePx = (15 * vmin * fontSizeMultiplier * 2.5) / 100;
+    const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
+    const fontWeight = 'bold';
+
+    const rect = displayCanvas.getBoundingClientRect();
+    const bgColor = bgColorInput.value;
+    const textColor = textColorInput.value;
+
+    // Clear canvas
+    displayCtx.fillStyle = bgColor;
+    displayCtx.fillRect(0, 0, rect.width, rect.height);
+
+    // Set font and measure text
+    displayCtx.font = `${fontWeight} ${fontSizePx}px ${fontFamily}`;
+    displayCtx.fillStyle = textColor;
+    displayCtx.textBaseline = 'middle';
+
+    const metrics = displayCtx.measureText(message);
+    const textWidth = metrics.width;
+
+    // Calculate scroll speed based on slider
     const speed = speedSlider.value;
-    const duration = 20 - (speed * 1.5); // 5s to 20s
-    const scrollingText = document.querySelector('.scrolling-text');
-    if (scrollingText) {
-        scrollingText.style.animationDuration = `${duration}s`;
+    const pixelsPerFrame = speed * 0.5; // Adjust speed multiplier as needed
+
+    // Draw text scrolling from right to left
+    const x = rect.width - scrollOffset;
+    const y = rect.height / 2;
+
+    displayCtx.fillText(message, x, y);
+
+    // Update scroll offset
+    scrollOffset += pixelsPerFrame;
+
+    // Reset when text has completely scrolled off screen
+    if (scrollOffset > rect.width + textWidth) {
+        scrollOffset = 0;
     }
+
+    // Continue animation
+    scrollAnimationId = requestAnimationFrame(renderScroll);
 }
 
-function updateSlideshowLetter(message) {
+function renderSlideshow() {
+    const message = messageInput.value || 'OMELET';
     if (message.length === 0) return;
-    
-    const characters = Array.from(message); // Properly handle emojis and multi-byte chars
+
+    const characters = Array.from(message);
     const letter = characters[currentLetterIndex];
-    const fontSizeMultiplier = fontSizeSlider.value / 100; // Slider value 100 = perfect fit, 200 = 2x
-    
+    const fontSizeMultiplier = fontSizeSlider.value / 100;
+
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const vmin = Math.min(vw, vh);
+    const vmax = Math.max(vw, vh);
+
     const finalSize = optimalFontSize * fontSizeMultiplier;
-    
-    log(`Displaying "${letter}": ${finalSize.toFixed(2)}${optimalFontUnit} (optimal: ${optimalFontSize.toFixed(2)}, multiplier: ${fontSizeMultiplier})`);
-    
-    displayText.innerHTML = letter;
-    displayText.style.fontSize = `${finalSize}${optimalFontUnit}`;
-    displayText.className = 'display-text';
+    const fontSizePx = optimalFontUnit === 'vmax'
+        ? (finalSize * vmax) / 100
+        : (finalSize * vmin) / 100;
+
+    log(`Displaying "${letter}": ${finalSize.toFixed(2)}${optimalFontUnit} = ${fontSizePx.toFixed(2)}px (optimal: ${optimalFontSize.toFixed(2)}, multiplier: ${fontSizeMultiplier})`);
+
+    const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
+    const fontWeight = 'bold';
+
+    renderCanvas(letter, fontSizePx, fontFamily, fontWeight);
 }
 
 function startSlideshow() {
     if (slideshowInterval) {
         clearInterval(slideshowInterval);
     }
-    
+
     const speed = speedSlider.value;
     const interval = 2000 - (speed * 150); // 500ms to 1850ms
-    
+
     slideshowInterval = setInterval(() => {
         const message = messageInput.value || 'OMELET';
         const characters = Array.from(message);
         currentLetterIndex = (currentLetterIndex + 1) % characters.length;
-        updateSlideshowLetter(message);
+        renderSlideshow();
     }, interval);
 }
 
@@ -359,3 +495,15 @@ messageInput.addEventListener('input', () => {
 
 // Initialize with static mode
 setMode('static');
+
+// Debounced resize handler
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    if (displayArea.classList.contains('active')) {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            log('Window resized, recalculating display');
+            updateDisplay();
+        }, 250);
+    }
+});
