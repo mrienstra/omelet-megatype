@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big Text Display</title>
+    <link rel="stylesheet" href="index.css"/>
+</head>
+<body>
+    <div class="controls" id="controls">
+        <div class="control-group">
+            <label for="messageInput">Message</label>
+            <textarea id="messageInput" placeholder="Enter your message here...">OMELET</textarea>
+        </div>
+        
+        <div class="control-group">
+            <label>Display Mode</label>
+            <div class="mode-buttons">
+                <button id="staticBtn" class="mode-btn">Static</button>
+                <button id="scrollBtn" class="mode-btn">Scroll</button>
+                <button id="slideshowBtn" class="mode-btn">Slideshow</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label>Colors</label>
+            <div class="color-controls">
+                <div class="color-control">
+                    <label for="textColor">Text</label>
+                    <input type="color" id="textColor" value="#ffffff">
+                </div>
+                <div class="color-control">
+                    <label for="bgColor">Background</label>
+                    <input type="color" id="bgColor" value="#000000">
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-group" id="speedControl">
+            <label for="speedSlider">Speed</label>
+            <div class="speed-control">
+                <input type="range" id="speedSlider" min="1" max="10" value="5">
+                <span class="speed-value" id="speedValue">5</span>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label for="fontSizeSlider">Font Size</label>
+            <div class="speed-control">
+                <input type="range" id="fontSizeSlider" min="1" max="200" value="100">
+                <span class="speed-value" id="fontSizeValue">100</span>
+            </div>
+        </div>
+        
+        <div class="control-group" id="scalingModeControl" style="display: none;">
+            <label>Scaling Mode (Slideshow)</label>
+            <div class="mode-buttons">
+                <button id="fitBtn" class="scaling-btn active">Fit</button>
+                <button id="fillBtn" class="scaling-btn">Fill</button>
+                <button id="balancedBtn" class="scaling-btn">Avg</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <label>
+                <input type="checkbox" id="debugLogging" checked>
+                <span style="font-weight: 600; margin-left: 5px;">Show Console Output</span>
+            </label>
+        </div>
+        
+        <div class="toggle-controls">
+            <button id="showBtn" class="active">Show Display</button>
+        </div>
+    </div>
+    
+    <div class="display-area" id="displayArea">
+        <div class="display-text" id="displayText"></div>
+    </div>
+    
+    <button class="close-btn" id="closeBtn">×</button>
+    
+    <div id="measurementDiv" style="position: fixed; visibility: hidden; white-space: nowrap;"></div>
+
+    <script src="index.js"></script>
+</body>
+</html>
