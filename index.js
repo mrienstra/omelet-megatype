@@ -15,8 +15,13 @@ const controls = document.getElementById('controls');
 const speedControl = document.getElementById('speedControl');
 const fontSizeSlider = document.getElementById('fontSizeSlider');
 const fontSizeValue = document.getElementById('fontSizeValue');
+const letterSpacingControl = document.getElementById('letterSpacingControl');
+const letterSpacingSlider = document.getElementById('letterSpacingSlider');
+const letterSpacingValue = document.getElementById('letterSpacingValue');
 const measurementCanvas = document.createElement('canvas');
 const measurementCtx = measurementCanvas.getContext('2d');
+const scrollCanvas = document.createElement('canvas');
+const scrollCtx = scrollCanvas.getContext('2d');
 const scalingModeControl = document.getElementById('scalingModeControl');
 const fitBtn = document.getElementById('fitBtn');
 const fillBtn = document.getElementById('fillBtn');
@@ -279,6 +284,14 @@ fontSizeSlider.addEventListener('input', () => {
     }
 });
 
+// Update letter spacing display
+letterSpacingSlider.addEventListener('input', () => {
+    letterSpacingValue.textContent = letterSpacingSlider.value;
+    if (displayArea.classList.contains('active') && currentMode === 'scroll') {
+        prepareScrollCanvas();
+    }
+});
+
 // Mode buttons
 function setMode(mode) {
     currentMode = mode;
@@ -287,6 +300,7 @@ function setMode(mode) {
     if (mode === 'static') {
         staticBtn.classList.add('active');
         speedControl.style.display = 'none';
+        letterSpacingControl.style.display = 'none';
         scalingModeControl.style.display = 'none';
         perLetterScalingControl.style.display = 'none';
         independentScalingControl.style.display = 'none';
@@ -294,6 +308,7 @@ function setMode(mode) {
     } else if (mode === 'scroll') {
         scrollBtn.classList.add('active');
         speedControl.style.display = 'block';
+        letterSpacingControl.style.display = 'block';
         scalingModeControl.style.display = 'block';
         perLetterScalingControl.style.display = 'block';
         independentScalingControl.style.display = 'block';
@@ -301,6 +316,7 @@ function setMode(mode) {
     } else if (mode === 'slideshow') {
         slideshowBtn.classList.add('active');
         speedControl.style.display = 'block';
+        letterSpacingControl.style.display = 'none';
         scalingModeControl.style.display = 'block';
         perLetterScalingControl.style.display = 'block';
         independentScalingControl.style.display = 'block';
@@ -334,7 +350,7 @@ function setScalingMode(mode) {
         if (currentMode === 'slideshow') {
             renderSlideshow();
         } else if (currentMode === 'scroll') {
-            renderScroll();
+            prepareScrollCanvas();
         }
     }
 }
@@ -348,7 +364,7 @@ perLetterScaling.addEventListener('change', () => {
         if (currentMode === 'slideshow') {
             renderSlideshow();
         } else if (currentMode === 'scroll') {
-            renderScroll();
+            prepareScrollCanvas();
         }
     }
 });
@@ -359,7 +375,7 @@ independentScaling.addEventListener('change', () => {
         if (currentMode === 'slideshow') {
             renderSlideshow();
         } else if (currentMode === 'scroll') {
-            renderScroll();
+            prepareScrollCanvas();
         }
     }
 });
@@ -443,6 +459,7 @@ function updateDisplay() {
     } else if (currentMode === 'scroll') {
         optimalFontSize = calculateOptimalFontSize(message);
         scrollOffset = 0;
+        prepareScrollCanvas();
         renderScroll();
     } else if (currentMode === 'slideshow') {
         optimalFontSize = calculateOptimalFontSize(message);
@@ -477,27 +494,20 @@ function calculateBaseFontSize(text) {
     return 5;
 }
 
-function renderScroll() {
+// Prepare scroll canvas with all letters rendered
+function prepareScrollCanvas() {
     const message = messageInput.value || 'OMELET';
     const fontSizeMultiplier = fontSizeSlider.value / 100;
     const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
     const fontWeight = 'bold';
+    const letterSpacing = parseInt(letterSpacingSlider.value);
 
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const vmin = Math.min(vw, vh);
     const vmax = Math.max(vw, vh);
     const rect = displayCanvas.getBoundingClientRect();
-    const bgColor = bgColorInput.value;
-    const textColor = textColorInput.value;
-
-    // Clear canvas
-    displayCtx.fillStyle = bgColor;
-    displayCtx.fillRect(0, 0, rect.width, rect.height);
-
-    // Calculate scroll speed based on slider
-    const speed = speedSlider.value;
-    const pixelsPerFrame = speed * 0.5;
+    const dpr = window.devicePixelRatio || 1;
 
     // Calculate message-wide scale factors if needed (for independent scaling without per-letter)
     let sharedScaleFactors = null;
@@ -520,30 +530,28 @@ function renderScroll() {
             maxHeight = Math.max(maxHeight, height);
         });
 
-        const baseScaleX = rect.height / maxWidth; // Using height for horizontal scrolling
+        const baseScaleX = rect.height / maxWidth;
         const baseScaleY = rect.height / maxHeight;
         sharedScaleFactors = { scaleX: baseScaleX, scaleY: baseScaleY };
     }
 
-    // Render each character with appropriate positioning
+    // Calculate total width needed for all characters
     const characters = Array.from(message);
-    let currentX = rect.width - scrollOffset;
     let totalWidth = 0;
+    const charData = [];
 
-    characters.forEach((char, index) => {
+    characters.forEach(char => {
         // Determine size for this character
         let charFontSizePx;
         let charOptimalUnit = optimalFontUnit;
 
         if (perLetterScaling.checked) {
-            // Calculate optimal size for this specific character
             const charOptimalSize = calculateOptimalFontSize(char);
             charOptimalUnit = optimalFontUnit;
             charFontSizePx = charOptimalUnit === 'vmax'
                 ? (charOptimalSize * vmax) / 100
                 : (charOptimalSize * vmin) / 100;
         } else {
-            // Use message-wide optimal size
             charFontSizePx = optimalFontUnit === 'vmax'
                 ? (optimalFontSize * vmax) / 100
                 : (optimalFontSize * vmin) / 100;
@@ -555,59 +563,92 @@ function renderScroll() {
         const charWidth = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
         const charHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
-        // Calculate scale factors if using independent scaling
+        // Calculate scale factors
         let scaleX, scaleY;
         if (independentScaling.checked) {
             if (sharedScaleFactors) {
-                // Use shared scale factors (message-wide)
                 scaleX = sharedScaleFactors.scaleX * fontSizeMultiplier;
                 scaleY = sharedScaleFactors.scaleY * fontSizeMultiplier;
             } else {
-                // Calculate per-character scale factors
                 scaleX = (rect.height / charWidth) * fontSizeMultiplier;
                 scaleY = (rect.height / charHeight) * fontSizeMultiplier;
             }
         } else {
-            // Uniform scaling - scale to fit height
-            const scale = (rect.height / charHeight) * fontSizeMultiplier;
-            scaleX = scale;
-            scaleY = scale;
+            // For uniform scaling, the optimal font size already accounts for fit/fill constraints
+            // We just apply the font size multiplier, no additional scaling needed
+            scaleX = fontSizeMultiplier;
+            scaleY = fontSizeMultiplier;
         }
 
-        // Calculate scaled width for positioning
         const scaledWidth = charWidth * scaleX;
+        const scaledHeight = charHeight * scaleY;
 
-        // Only draw if character is visible on screen
-        if (currentX + scaledWidth > 0 && currentX < rect.width) {
-            displayCtx.save();
+        charData.push({
+            char,
+            fontSizePx: charFontSizePx,
+            charWidth,
+            charHeight,
+            scaleX,
+            scaleY,
+            scaledWidth,
+            scaledHeight,
+            metrics,
+            x: totalWidth
+        });
 
-            // Move to character position and apply scaling
-            displayCtx.translate(currentX, rect.height / 2);
-            displayCtx.scale(scaleX, scaleY);
-
-            // Set font and color
-            displayCtx.font = `${fontWeight} ${charFontSizePx}px ${fontFamily}`;
-            displayCtx.fillStyle = textColor;
-            displayCtx.textBaseline = 'alphabetic';
-
-            // Draw character centered in scaled space
-            const x = (charWidth / 2) - metrics.actualBoundingBoxLeft;
-            const y = (charHeight / 2) - metrics.actualBoundingBoxDescent;
-            displayCtx.fillText(char, -x, y);
-
-            displayCtx.restore();
-        }
-
-        // Move to next character position
-        currentX += scaledWidth;
-        totalWidth += scaledWidth;
+        totalWidth += scaledWidth + letterSpacing;
     });
+
+    // Set up scroll canvas size
+    scrollCanvas.width = (totalWidth + rect.width) * dpr;
+    scrollCanvas.height = rect.height * dpr;
+    scrollCtx.scale(dpr, dpr);
+
+    // Clear scroll canvas
+    scrollCtx.clearRect(0, 0, totalWidth + rect.width, rect.height);
+
+    // Render all characters to scroll canvas
+    charData.forEach(data => {
+        scrollCtx.save();
+
+        scrollCtx.translate(data.x, rect.height / 2);
+        scrollCtx.scale(data.scaleX, data.scaleY);
+
+        scrollCtx.font = `${fontWeight} ${data.fontSizePx}px ${fontFamily}`;
+        scrollCtx.fillStyle = textColorInput.value;
+        scrollCtx.textBaseline = 'alphabetic';
+
+        const x = (data.charWidth / 2) - data.metrics.actualBoundingBoxLeft;
+        const y = (data.charHeight / 2) - data.metrics.actualBoundingBoxDescent;
+        scrollCtx.fillText(data.char, -x, y);
+
+        scrollCtx.restore();
+    });
+
+    return totalWidth;
+}
+
+function renderScroll() {
+    const rect = displayCanvas.getBoundingClientRect();
+    const bgColor = bgColorInput.value;
+
+    // Clear display canvas
+    displayCtx.fillStyle = bgColor;
+    displayCtx.fillRect(0, 0, rect.width, rect.height);
+
+    // Draw scroll canvas at offset
+    displayCtx.drawImage(scrollCanvas, rect.width - scrollOffset, 0);
+
+    // Calculate scroll speed based on slider
+    const speed = speedSlider.value;
+    const pixelsPerFrame = speed * 0.5;
 
     // Update scroll offset
     scrollOffset += pixelsPerFrame;
 
-    // Reset when all text has scrolled off screen
-    if (scrollOffset > rect.width + totalWidth) {
+    // Reset when text has scrolled off screen
+    const totalWidth = scrollCanvas.width / (window.devicePixelRatio || 1);
+    if (scrollOffset > totalWidth) {
         scrollOffset = 0;
     }
 
