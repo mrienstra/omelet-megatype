@@ -15,6 +15,8 @@ const speedControl = document.getElementById('speedControl');
 const fontSizeSlider = document.getElementById('fontSizeSlider');
 const fontSizeValue = document.getElementById('fontSizeValue');
 const measurementDiv = document.getElementById('measurementDiv');
+const measurementCanvas = document.createElement('canvas');
+const measurementCtx = measurementCanvas.getContext('2d');
 const scalingModeControl = document.getElementById('scalingModeControl');
 const fitBtn = document.getElementById('fitBtn');
 const fillBtn = document.getElementById('fillBtn');
@@ -38,61 +40,77 @@ function log(...args) {
 // Calculate optimal font size for a message (where largest char fits screen)
 function calculateOptimalFontSize(message) {
     if (!message) return 100;
-    
+
     const characters = Array.from(message);
     const uniqueChars = [...new Set(characters)];
-    
-    log('=== CALCULATING OPTIMAL FONT SIZE ===');
+
+    log('=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===');
     log('Message:', message);
     log('Unique characters:', uniqueChars);
     log('Scaling mode:', scalingMode);
-    
-    // Test size - always use vmin for measurement
-    const testSize = 100;
-    measurementDiv.style.fontSize = `${testSize}vmin`;
-    
+
     // Get viewport dimensions
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const isPortrait = vh > vw;
-    
+
     log('Viewport:', vw, 'x', vh, isPortrait ? '(portrait)' : '(landscape)');
-    
+
+    // Calculate test font size in pixels
+    // We'll use a test size of 100vmin to establish proportions
+    const testSizeVmin = 100;
+    const vmin = Math.min(vw, vh);
+    const testSizePx = (testSizeVmin / 100) * vmin;
+
+    // Get computed font family from the display element
+    const computedStyle = window.getComputedStyle(displayText);
+    const fontFamily = computedStyle.fontFamily || 'sans-serif';
+    const fontWeight = computedStyle.fontWeight || 'bold';
+
+    // Set canvas font - need to use pixel size for measurement
+    measurementCtx.font = `${fontWeight} ${testSizePx}px ${fontFamily}`;
+
+    log(`Test font: ${measurementCtx.font}`);
+    log(`Test size: ${testSizeVmin}vmin = ${testSizePx.toFixed(2)}px`);
+
     // Track the maximum width and maximum height across all characters
     let maxWidth = 0;
     let maxHeight = 0;
     let widestChar = '';
     let tallestChar = '';
-    
+
     uniqueChars.forEach(char => {
-        measurementDiv.textContent = char;
-        const rect = measurementDiv.getBoundingClientRect();
-        
-        log(`  "${char}": ${rect.width.toFixed(2)}px wide, ${rect.height.toFixed(2)}px tall`);
-        
-        if (rect.width > maxWidth) {
-            maxWidth = rect.width;
+        const metrics = measurementCtx.measureText(char);
+
+        // Calculate actual bounding box dimensions
+        const width = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
+        const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+
+        log(`  "${char}": ${width.toFixed(2)}px wide, ${height.toFixed(2)}px tall (canvas measureText)`);
+
+        if (width > maxWidth) {
+            maxWidth = width;
             widestChar = char;
         }
-        if (rect.height > maxHeight) {
-            maxHeight = rect.height;
+        if (height > maxHeight) {
+            maxHeight = height;
             tallestChar = char;
         }
     });
-    
+
     log(`Widest char: "${widestChar}" at ${maxWidth.toFixed(2)}px`);
     log(`Tallest char: "${tallestChar}" at ${maxHeight.toFixed(2)}px`);
-    
+
     // Calculate ratios: what percentage of viewport does the max bounding box take?
     const widthRatio = maxWidth / vw;
     const heightRatio = maxHeight / vh;
-    
+
     log(`Width ratio: ${widthRatio.toFixed(4)} (${(widthRatio * 100).toFixed(2)}% of viewport width)`);
     log(`Height ratio: ${heightRatio.toFixed(4)} (${(heightRatio * 100).toFixed(2)}% of viewport height)`);
-    
+
     let constraintRatio;
     let unit;
-    
+
     if (scalingMode === 'fit') {
         // Fit: constrained by whichever dimension hits the edge first (the larger ratio)
         constraintRatio = Math.max(widthRatio, heightRatio);
@@ -109,21 +127,21 @@ function calculateOptimalFontSize(message) {
         unit = 'vmin';
         log('BALANCED mode: using average of both dimensions');
     }
-    
+
     log(`Constraint ratio: ${constraintRatio.toFixed(4)}`);
-    
+
     // Store the unit for later use
     optimalFontUnit = unit;
-    
+
     // Calculate what font size would make the largest char fit edge-to-edge
     if (constraintRatio > 0) {
         const targetRatio = 1.0; // 100% of viewport (edge-to-edge)
-        const optimalSize = (testSize * targetRatio) / constraintRatio;
+        const optimalSize = (testSizeVmin * targetRatio) / constraintRatio;
         log(`Optimal font size: ${optimalSize.toFixed(2)}${unit} (at 100%)`);
         log('===================================\n');
         return optimalSize;
     }
-    
+
     log('ERROR: constraint ratio was 0');
     log('===================================\n');
     return 100;
