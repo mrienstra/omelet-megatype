@@ -603,6 +603,9 @@ function prepareScrollCanvas() {
     scrollCanvas.width = (totalWidth + rect.width) * dpr;
     scrollCanvas.height = rect.height * dpr;
 
+    log(`Scroll canvas: ${scrollCanvas.width}x${scrollCanvas.height} physical (${totalWidth + rect.width}x${rect.height} CSS), DPR: ${dpr}`);
+    log(`Viewport height: ${rect.height}, center Y: ${rect.height / 2}`);
+
     // Reset transform and apply DPR scaling
     scrollCtx.setTransform(1, 0, 0, 1, 0, 0); // Reset to identity
     scrollCtx.scale(dpr, dpr);
@@ -614,19 +617,29 @@ function prepareScrollCanvas() {
     charData.forEach(data => {
         scrollCtx.save();
 
-        scrollCtx.translate(data.x, rect.height / 2);
+        const translateY = rect.height / 2;
+        scrollCtx.translate(data.x, translateY);
         scrollCtx.scale(data.scaleX, data.scaleY);
 
         scrollCtx.font = `${fontWeight} ${data.fontSizePx}px ${fontFamily}`;
         scrollCtx.fillStyle = textColorInput.value;
         scrollCtx.textBaseline = 'alphabetic';
 
-        // Center the text at the origin
-        // For alphabetic baseline: center_y = baseline_y + (descent - ascent) / 2
-        // We want center at 0, so: baseline_y = (ascent - descent) / 2
-        const xOffset = (data.charWidth / 2) - data.metrics.actualBoundingBoxLeft;
-        const yOffset = (data.metrics.actualBoundingBoxAscent - data.metrics.actualBoundingBoxDescent) / 2;
-        scrollCtx.fillText(data.char, -xOffset, yOffset);
+        // Position text: left edge at x=0, vertically centered at y=0
+        // For x: we want the left edge of the bounding box at 0
+        const x = data.metrics.actualBoundingBoxLeft;
+
+        // For y: we want the vertical center at 0
+        // With alphabetic baseline, top is at (y - ascent), bottom at (y + descent)
+        // Center at: (top + bottom) / 2 = ((y - ascent) + (y + descent)) / 2 = y + (descent - ascent) / 2
+        // We want center at 0, so: y = (ascent - descent) / 2
+        const y = (data.metrics.actualBoundingBoxAscent - data.metrics.actualBoundingBoxDescent) / 2;
+
+        log(`"${data.char}": translate(${data.x.toFixed(2)}, ${translateY.toFixed(2)}), scale(${data.scaleX.toFixed(2)}, ${data.scaleY.toFixed(2)})`);
+        log(`  bbox: ${data.charWidth.toFixed(2)}x${data.charHeight.toFixed(2)}, left: ${data.metrics.actualBoundingBoxLeft.toFixed(2)}, ascent: ${data.metrics.actualBoundingBoxAscent.toFixed(2)}, descent: ${data.metrics.actualBoundingBoxDescent.toFixed(2)}`);
+        log(`  draw at (${x.toFixed(2)}, ${y.toFixed(2)}) - left edge at 0, v-centered`);
+
+        scrollCtx.fillText(data.char, x, y);
 
         scrollCtx.restore();
     });
