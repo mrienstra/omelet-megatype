@@ -1,0 +1,157 @@
+Canvas setup: 987x992 CSS, 1974x1984 physical (DPR: 2)
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: OMELET
+Unique characters: (5) ['O', 'M', 'E', 'L', 'T']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "O": 670.85px wide, 719.53px tall (canvas measureText)
+  "M": 734.23px wide, 695.43px tall (canvas measureText)
+  "E": 460.73px wide, 695.43px tall (canvas measureText)
+  "L": 449.64px wide, 695.43px tall (canvas measureText)
+  "T": 547.96px wide, 695.43px tall (canvas measureText)
+Widest char: "M" at 734.23px
+Tallest char: "O" at 719.53px
+Width ratio: 0.7439 (74.39% of viewport width)
+Height ratio: 0.7253 (72.53% of viewport height)
+FIT mode: constrained by WIDTH
+Constraint ratio: 0.7439
+Optimal font size: 134.43vmin (at 100%)
+===================================
+
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: O
+Unique characters: ['O']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "O": 670.85px wide, 719.53px tall (canvas measureText)
+Widest char: "O" at 670.85px
+Tallest char: "O" at 719.53px
+Width ratio: 0.6797 (67.97% of viewport width)
+Height ratio: 0.7253 (72.53% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7253
+Optimal font size: 137.87vmin (at 100%)
+===================================
+
+Per-letter scaling: "O" gets its own calculation
+Displaying "O": 137.87vmin = 1360.76px (optimal: 137.87, multiplier: 1)
+Rendered "O" at (-18.45, 975.39), bbox: 924.89x992.00px
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: M
+Unique characters: ['M']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "M": 734.23px wide, 695.43px tall (canvas measureText)
+Widest char: "M" at 734.23px
+Tallest char: "M" at 695.43px
+Width ratio: 0.7439 (74.39% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by WIDTH
+Constraint ratio: 0.7439
+Optimal font size: 134.43vmin (at 100%)
+===================================
+
+Per-letter scaling: "M" gets its own calculation
+Displaying "M": 134.43vmin = 1326.80px (optimal: 134.43, multiplier: 1)
+Rendered "M" at (-77.74, 963.42), bbox: 986.99x934.84px
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: E
+Unique characters: ['E']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "E": 460.73px wide, 695.43px tall (canvas measureText)
+Widest char: "E" at 460.73px
+Tallest char: "E" at 695.43px
+Width ratio: 0.4668 (46.68% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7010
+Optimal font size: 142.65vmin (at 100%)
+===================================
+
+Per-letter scaling: "E" gets its own calculation
+Displaying "E": 142.65vmin = 1407.91px (optimal: 142.65, multiplier: 1)
+Rendered "E" at (82.40, 992.00), bbox: 657.21x992.00px
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: L
+Unique characters: ['L']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "L": 449.64px wide, 695.43px tall (canvas measureText)
+Widest char: "L" at 449.64px
+Tallest char: "L" at 695.43px
+Width ratio: 0.4556 (45.56% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7010
+Optimal font size: 142.65vmin (at 100%)
+===================================
+
+Per-letter scaling: "L" gets its own calculation
+Displaying "L": 142.65vmin = 1407.91px (optimal: 142.65, multiplier: 1)
+Rendered "L" at (90.31, 992.00), bbox: 641.40x992.00px
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: E
+Unique characters: ['E']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "E": 460.73px wide, 695.43px tall (canvas measureText)
+Widest char: "E" at 460.73px
+Tallest char: "E" at 695.43px
+Width ratio: 0.4668 (46.68% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7010
+Optimal font size: 142.65vmin (at 100%)
+===================================
+
+Per-letter scaling: "E" gets its own calculation
+Displaying "E": 142.65vmin = 1407.91px (optimal: 142.65, multiplier: 1)
+Rendered "E" at (82.40, 992.00), bbox: 657.21x992.00px
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: T
+Unique characters: ['T']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "T": 547.96px wide, 695.43px tall (canvas measureText)
+Widest char: "T" at 547.96px
+Tallest char: "T" at 695.43px
+Width ratio: 0.5552 (55.52% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7010
+Optimal font size: 142.65vmin (at 100%)
+===================================
+
+Per-letter scaling: "T" gets its own calculation
+Displaying "T": 142.65vmin = 1407.91px (optimal: 142.65, multiplier: 1)
+Rendered "T" at (70.03, 992.00), bbox: 781.64x992.00px
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: O
+Unique characters: ['O']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "O": 670.85px wide, 719.53px tall (canvas measureText)
+Widest char: "O" at 670.85px
+Tallest char: "O" at 719.53px
+Width ratio: 0.6797 (67.97% of viewport width)
+Height ratio: 0.7253 (72.53% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7253
+Optimal font size: 137.87vmin (at 100%)

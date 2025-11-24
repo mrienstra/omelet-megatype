@@ -1,0 +1,46 @@
+Canvas setup: 987x992 CSS, 1974x1984 physical (DPR: 2)
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: OMELET
+Unique characters: (5) ['O', 'M', 'E', 'L', 'T']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "O": 670.85px wide, 719.53px tall (canvas measureText)
+  "M": 734.23px wide, 695.43px tall (canvas measureText)
+  "E": 460.73px wide, 695.43px tall (canvas measureText)
+  "L": 449.64px wide, 695.43px tall (canvas measureText)
+  "T": 547.96px wide, 695.43px tall (canvas measureText)
+Widest char: "M" at 734.23px
+Tallest char: "O" at 719.53px
+Width ratio: 0.7439 (74.39% of viewport width)
+Height ratio: 0.7253 (72.53% of viewport height)
+FIT mode: constrained by WIDTH
+Constraint ratio: 0.7439
+Optimal font size: 134.43vmin (at 100%)
+===================================
+
+Independent H/V scaling enabled for "O" (base: 134.43vmin, per-letter: false)
+Independent scaling: text bbox 901.80x967.24px -> viewport 987.00x992.00px
+Scale factors: X=1.0945, Y=1.0256 (multiplier: 1.00)
+Rendered "O" with independent scaling at (-48.26, 951.04) in scaled coords
+Independent H/V scaling enabled for "M" (base: 134.43vmin, per-letter: false)
+Independent scaling: text bbox 986.99x934.84px -> viewport 987.00x992.00px
+Scale factors: X=1.0000, Y=1.0611 (multiplier: 1.00)
+Rendered "M" with independent scaling at (-77.74, 934.84) in scaled coords
+Independent H/V scaling enabled for "E" (base: 134.43vmin, per-letter: false)
+Independent scaling: text bbox 619.34x934.84px -> viewport 987.00x992.00px
+Scale factors: X=1.5936, Y=1.0611 (multiplier: 1.00)
+Rendered "E" with independent scaling at (-77.74, 934.84) in scaled coords
+Independent H/V scaling enabled for "L" (base: 134.43vmin, per-letter: false)
+Independent scaling: text bbox 604.44x934.84px -> viewport 987.00x992.00px
+Scale factors: X=1.6329, Y=1.0611 (multiplier: 1.00)
+Rendered "L" with independent scaling at (-77.74, 934.84) in scaled coords
+Independent H/V scaling enabled for "E" (base: 134.43vmin, per-letter: false)
+Independent scaling: text bbox 619.34x934.84px -> viewport 987.00x992.00px
+Scale factors: X=1.5936, Y=1.0611 (multiplier: 1.00)
+Rendered "E" with independent scaling at (-77.74, 934.84) in scaled coords
+Independent H/V scaling enabled for "T" (base: 134.43vmin, per-letter: false)
+Independent scaling: text bbox 736.60x934.84px -> viewport 987.00x992.00px
+Scale factors: X=1.3399, Y=1.0611 (multiplier: 1.00)
+Rendered "T" with independent scaling at (-30.77, 934.84) in scaled coords

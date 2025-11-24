@@ -1,0 +1,169 @@
+Canvas setup: 987x992 CSS, 1974x1984 physical (DPR: 2)
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: OMELET
+Unique characters: (5) ['O', 'M', 'E', 'L', 'T']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "O": 670.85px wide, 719.53px tall (canvas measureText)
+  "M": 734.23px wide, 695.43px tall (canvas measureText)
+  "E": 460.73px wide, 695.43px tall (canvas measureText)
+  "L": 449.64px wide, 695.43px tall (canvas measureText)
+  "T": 547.96px wide, 695.43px tall (canvas measureText)
+Widest char: "M" at 734.23px
+Tallest char: "O" at 719.53px
+Width ratio: 0.7439 (74.39% of viewport width)
+Height ratio: 0.7253 (72.53% of viewport height)
+FIT mode: constrained by WIDTH
+Constraint ratio: 0.7439
+Optimal font size: 134.43vmin (at 100%)
+===================================
+
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: O
+Unique characters: ['O']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "O": 670.85px wide, 719.53px tall (canvas measureText)
+Widest char: "O" at 670.85px
+Tallest char: "O" at 719.53px
+Width ratio: 0.6797 (67.97% of viewport width)
+Height ratio: 0.7253 (72.53% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7253
+Optimal font size: 137.87vmin (at 100%)
+===================================
+
+Per-letter scaling: "O" gets its own calculation
+Independent H/V scaling enabled for "O" (base: 137.87vmin, per-letter: true)
+Independent scaling: text bbox 924.89x992.00px -> viewport 987.00x992.00px
+Scale factors: X=1.0672, Y=1.0000 (multiplier: 1.00)
+Rendered "O" with independent scaling at (-49.50, 975.39) in scaled coords
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: M
+Unique characters: ['M']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "M": 734.23px wide, 695.43px tall (canvas measureText)
+Widest char: "M" at 734.23px
+Tallest char: "M" at 695.43px
+Width ratio: 0.7439 (74.39% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by WIDTH
+Constraint ratio: 0.7439
+Optimal font size: 134.43vmin (at 100%)
+===================================
+
+Per-letter scaling: "M" gets its own calculation
+Independent H/V scaling enabled for "M" (base: 134.43vmin, per-letter: true)
+Independent scaling: text bbox 986.99x934.84px -> viewport 987.00x992.00px
+Scale factors: X=1.0000, Y=1.0611 (multiplier: 1.00)
+Rendered "M" with independent scaling at (-77.74, 934.84) in scaled coords
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: E
+Unique characters: ['E']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "E": 460.73px wide, 695.43px tall (canvas measureText)
+Widest char: "E" at 460.73px
+Tallest char: "E" at 695.43px
+Width ratio: 0.4668 (46.68% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7010
+Optimal font size: 142.65vmin (at 100%)
+===================================
+
+Per-letter scaling: "E" gets its own calculation
+Independent H/V scaling enabled for "E" (base: 142.65vmin, per-letter: true)
+Independent scaling: text bbox 657.21x992.00px -> viewport 987.00x992.00px
+Scale factors: X=1.5018, Y=1.0000 (multiplier: 1.00)
+Rendered "E" with independent scaling at (-82.49, 992.00) in scaled coords
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: L
+Unique characters: ['L']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "L": 449.64px wide, 695.43px tall (canvas measureText)
+Widest char: "L" at 449.64px
+Tallest char: "L" at 695.43px
+Width ratio: 0.4556 (45.56% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7010
+Optimal font size: 142.65vmin (at 100%)
+===================================
+
+Per-letter scaling: "L" gets its own calculation
+Independent H/V scaling enabled for "L" (base: 142.65vmin, per-letter: true)
+Independent scaling: text bbox 641.40x992.00px -> viewport 987.00x992.00px
+Scale factors: X=1.5388, Y=1.0000 (multiplier: 1.00)
+Rendered "L" with independent scaling at (-82.49, 992.00) in scaled coords
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: E
+Unique characters: ['E']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "E": 460.73px wide, 695.43px tall (canvas measureText)
+Widest char: "E" at 460.73px
+Tallest char: "E" at 695.43px
+Width ratio: 0.4668 (46.68% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7010
+Optimal font size: 142.65vmin (at 100%)
+===================================
+
+Per-letter scaling: "E" gets its own calculation
+Independent H/V scaling enabled for "E" (base: 142.65vmin, per-letter: true)
+Independent scaling: text bbox 657.21x992.00px -> viewport 987.00x992.00px
+Scale factors: X=1.5018, Y=1.0000 (multiplier: 1.00)
+Rendered "E" with independent scaling at (-82.49, 992.00) in scaled coords
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: T
+Unique characters: ['T']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "T": 547.96px wide, 695.43px tall (canvas measureText)
+Widest char: "T" at 547.96px
+Tallest char: "T" at 695.43px
+Width ratio: 0.5552 (55.52% of viewport width)
+Height ratio: 0.7010 (70.10% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7010
+Optimal font size: 142.65vmin (at 100%)
+===================================
+
+Per-letter scaling: "T" gets its own calculation
+Independent H/V scaling enabled for "T" (base: 142.65vmin, per-letter: true)
+Independent scaling: text bbox 781.64x992.00px -> viewport 987.00x992.00px
+Scale factors: X=1.2627, Y=1.0000 (multiplier: 1.00)
+Rendered "T" with independent scaling at (-32.65, 992.00) in scaled coords
+=== CALCULATING OPTIMAL FONT SIZE (Canvas) ===
+Message: O
+Unique characters: ['O']
+Scaling mode: fit
+Viewport: 987 x 992 (portrait)
+Test font: bold 987px -apple-system, "system-ui", "Segoe UI", Arial, sans-serif
+Test size: 100vmin = 987.00px
+  "O": 670.85px wide, 719.53px tall (canvas measureText)
+Widest char: "O" at 670.85px
+Tallest char: "O" at 719.53px
+Width ratio: 0.6797 (67.97% of viewport width)
+Height ratio: 0.7253 (72.53% of viewport height)
+FIT mode: constrained by HEIGHT
+Constraint ratio: 0.7253
+Optimal font size: 137.87vmin (at 100%)

@@ -528,29 +528,49 @@ function renderSlideshow() {
     const vmin = Math.min(vw, vh);
     const vmax = Math.max(vw, vh);
 
-    // Determine base size: per-letter or message-wide
-    let letterOptimalSize, letterOptimalUnit;
-    if (perLetterScaling.checked) {
-        // Calculate optimal size for just this letter
-        letterOptimalSize = calculateOptimalFontSize(letter);
-        letterOptimalUnit = optimalFontUnit; // Set by calculateOptimalFontSize
-        log(`Per-letter scaling: "${letter}" gets its own calculation`);
-    } else {
-        // Use the pre-calculated size for the whole message
-        letterOptimalSize = optimalFontSize;
-        letterOptimalUnit = optimalFontUnit;
-    }
-
-    const finalSize = letterOptimalSize * fontSizeMultiplier;
-    const fontSizePx = letterOptimalUnit === 'vmax'
-        ? (finalSize * vmax) / 100
-        : (finalSize * vmin) / 100;
-
     // Check if independent scaling is enabled
     if (independentScaling.checked) {
-        log(`Independent H/V scaling enabled for "${letter}" (base: ${finalSize.toFixed(2)}${letterOptimalUnit}, per-letter: ${perLetterScaling.checked})`);
-        renderCanvasWithIndependentScale(letter, fontSizePx, fontFamily, fontWeight, fontSizeMultiplier);
+        // Independent scaling uses a different approach:
+        // Calculate base size per-letter or message-wide, but render with independent X/Y scaling
+        let baseFontSizePx;
+
+        if (perLetterScaling.checked) {
+            // Calculate optimal size for just this letter, then use that as base for independent scaling
+            const letterOptimalSize = calculateOptimalFontSize(letter);
+            const letterOptimalUnit = optimalFontUnit;
+            log(`Independent H/V + Per-letter: "${letter}" gets its own calculation (${letterOptimalSize.toFixed(2)}${letterOptimalUnit})`);
+            baseFontSizePx = letterOptimalUnit === 'vmax'
+                ? (letterOptimalSize * vmax) / 100
+                : (letterOptimalSize * vmin) / 100;
+        } else {
+            // Use the message-wide optimal size as base
+            log(`Independent H/V only: "${letter}" uses message-wide size (${optimalFontSize.toFixed(2)}${optimalFontUnit})`);
+            baseFontSizePx = optimalFontUnit === 'vmax'
+                ? (optimalFontSize * vmax) / 100
+                : (optimalFontSize * vmin) / 100;
+        }
+
+        renderCanvasWithIndependentScale(letter, baseFontSizePx, fontFamily, fontWeight, fontSizeMultiplier);
     } else {
+        // Normal uniform scaling
+        // Determine base size: per-letter or message-wide
+        let letterOptimalSize, letterOptimalUnit;
+        if (perLetterScaling.checked) {
+            // Calculate optimal size for just this letter
+            letterOptimalSize = calculateOptimalFontSize(letter);
+            letterOptimalUnit = optimalFontUnit; // Set by calculateOptimalFontSize
+            log(`Per-letter scaling: "${letter}" gets its own calculation`);
+        } else {
+            // Use the pre-calculated size for the whole message
+            letterOptimalSize = optimalFontSize;
+            letterOptimalUnit = optimalFontUnit;
+        }
+
+        const finalSize = letterOptimalSize * fontSizeMultiplier;
+        const fontSizePx = letterOptimalUnit === 'vmax'
+            ? (finalSize * vmax) / 100
+            : (finalSize * vmin) / 100;
+
         log(`Displaying "${letter}": ${finalSize.toFixed(2)}${letterOptimalUnit} = ${fontSizePx.toFixed(2)}px (optimal: ${letterOptimalSize.toFixed(2)}, multiplier: ${fontSizeMultiplier})`);
         renderCanvas(letter, fontSizePx, fontFamily, fontWeight);
     }
