@@ -35,6 +35,7 @@ let scrollOffset = 0;
 let optimalFontSize = 100; // vmin value where largest char fits perfectly
 let optimalFontUnit = 'vmin'; // unit to use for optimal font size
 let scalingMode = 'fit'; // 'fit', 'fill', or 'balanced'
+let messageWideScaleFactors = { scaleX: 1, scaleY: 1 }; // For independent scaling without per-letter
 
 // Helper function for conditional logging
 function log(...args) {
@@ -90,7 +91,8 @@ function renderCanvas(text, fontSizePx, fontFamily, fontWeight) {
 }
 
 // Render text with independent horizontal and vertical scaling
-function renderCanvasWithIndependentScale(text, fontSizePx, fontFamily, fontWeight, scaleMultiplier) {
+// If sharedScaleFactors is provided, use those instead of calculating per-letter
+function renderCanvasWithIndependentScale(text, fontSizePx, fontFamily, fontWeight, scaleMultiplier, sharedScaleFactors = null) {
     const rect = displayCanvas.getBoundingClientRect();
     const bgColor = bgColorInput.value;
     const textColor = textColorInput.value;
@@ -109,14 +111,22 @@ function renderCanvasWithIndependentScale(text, fontSizePx, fontFamily, fontWeig
     const textWidth = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
     const textHeight = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
 
-    // Calculate scale factors to fill both dimensions, then apply the multiplier
-    const baseScaleX = rect.width / textWidth;
-    const baseScaleY = rect.height / textHeight;
-    const scaleX = baseScaleX * scaleMultiplier;
-    const scaleY = baseScaleY * scaleMultiplier;
+    let scaleX, scaleY;
 
-    log(`Independent scaling: text bbox ${textWidth.toFixed(2)}x${textHeight.toFixed(2)}px -> viewport ${rect.width.toFixed(2)}x${rect.height.toFixed(2)}px`);
-    log(`Scale factors: X=${scaleX.toFixed(4)}, Y=${scaleY.toFixed(4)} (multiplier: ${scaleMultiplier.toFixed(2)})`);
+    if (sharedScaleFactors) {
+        // Use pre-calculated scale factors (message-wide mode)
+        scaleX = sharedScaleFactors.scaleX * scaleMultiplier;
+        scaleY = sharedScaleFactors.scaleY * scaleMultiplier;
+        log(`Using shared scale factors: X=${scaleX.toFixed(4)}, Y=${scaleY.toFixed(4)} (multiplier: ${scaleMultiplier.toFixed(2)})`);
+    } else {
+        // Calculate scale factors for this specific letter (per-letter mode)
+        const baseScaleX = rect.width / textWidth;
+        const baseScaleY = rect.height / textHeight;
+        scaleX = baseScaleX * scaleMultiplier;
+        scaleY = baseScaleY * scaleMultiplier;
+        log(`Independent scaling: text bbox ${textWidth.toFixed(2)}x${textHeight.toFixed(2)}px -> viewport ${rect.width.toFixed(2)}x${rect.height.toFixed(2)}px`);
+        log(`Scale factors: X=${scaleX.toFixed(4)}, Y=${scaleY.toFixed(4)} (multiplier: ${scaleMultiplier.toFixed(2)})`);
+    }
 
     // Save context state
     displayCtx.save();
@@ -527,12 +537,14 @@ function renderSlideshow() {
     const vh = window.innerHeight;
     const vmin = Math.min(vw, vh);
     const vmax = Math.max(vw, vh);
+    const rect = displayCanvas.getBoundingClientRect();
 
     // Check if independent scaling is enabled
     if (independentScaling.checked) {
         // Independent scaling uses a different approach:
         // Calculate base size per-letter or message-wide, but render with independent X/Y scaling
         let baseFontSizePx;
+        let sharedScaleFactors = null;
 
         if (perLetterScaling.checked) {
             // Calculate optimal size for just this letter, then use that as base for independent scaling
@@ -542,15 +554,39 @@ function renderSlideshow() {
             baseFontSizePx = letterOptimalUnit === 'vmax'
                 ? (letterOptimalSize * vmax) / 100
                 : (letterOptimalSize * vmin) / 100;
+            // No shared scale factors - each letter calculates its own
         } else {
             // Use the message-wide optimal size as base
             log(`Independent H/V only: "${letter}" uses message-wide size (${optimalFontSize.toFixed(2)}${optimalFontUnit})`);
             baseFontSizePx = optimalFontUnit === 'vmax'
                 ? (optimalFontSize * vmax) / 100
                 : (optimalFontSize * vmin) / 100;
+
+            // Calculate shared scale factors based on the largest characters in the message
+            // Measure all unique characters at the base font size
+            const uniqueChars = [...new Set(Array.from(message))];
+            measurementCtx.font = `${fontWeight} ${baseFontSizePx}px ${fontFamily}`;
+
+            let maxWidth = 0;
+            let maxHeight = 0;
+
+            uniqueChars.forEach(char => {
+                const metrics = measurementCtx.measureText(char);
+                const width = metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight;
+                const height = metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+                maxWidth = Math.max(maxWidth, width);
+                maxHeight = Math.max(maxHeight, height);
+            });
+
+            // Calculate scale factors based on largest dimensions
+            const baseScaleX = rect.width / maxWidth;
+            const baseScaleY = rect.height / maxHeight;
+            sharedScaleFactors = { scaleX: baseScaleX, scaleY: baseScaleY };
+
+            log(`Message-wide scale factors calculated: X=${baseScaleX.toFixed(4)} (viewport ${rect.width.toFixed(2)} / max width ${maxWidth.toFixed(2)}), Y=${baseScaleY.toFixed(4)} (viewport ${rect.height.toFixed(2)} / max height ${maxHeight.toFixed(2)})`);
         }
 
-        renderCanvasWithIndependentScale(letter, baseFontSizePx, fontFamily, fontWeight, fontSizeMultiplier);
+        renderCanvasWithIndependentScale(letter, baseFontSizePx, fontFamily, fontWeight, fontSizeMultiplier, sharedScaleFactors);
     } else {
         // Normal uniform scaling
         // Determine base size: per-letter or message-wide
