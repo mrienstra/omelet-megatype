@@ -21,6 +21,8 @@ const scalingModeControl = document.getElementById('scalingModeControl');
 const fitBtn = document.getElementById('fitBtn');
 const fillBtn = document.getElementById('fillBtn');
 const balancedBtn = document.getElementById('balancedBtn');
+const perLetterScalingControl = document.getElementById('perLetterScalingControl');
+const perLetterScaling = document.getElementById('perLetterScaling');
 const debugLogging = document.getElementById('debugLogging');
 
 let currentMode = 'static';
@@ -223,24 +225,27 @@ fontSizeSlider.addEventListener('input', () => {
 function setMode(mode) {
     currentMode = mode;
     [staticBtn, scrollBtn, slideshowBtn].forEach(btn => btn.classList.remove('active'));
-    
+
     if (mode === 'static') {
         staticBtn.classList.add('active');
         speedControl.style.display = 'none';
         scalingModeControl.style.display = 'none';
+        perLetterScalingControl.style.display = 'none';
         displayArea.classList.remove('slideshow');
     } else if (mode === 'scroll') {
         scrollBtn.classList.add('active');
         speedControl.style.display = 'block';
         scalingModeControl.style.display = 'none';
+        perLetterScalingControl.style.display = 'none';
         displayArea.classList.remove('slideshow');
     } else if (mode === 'slideshow') {
         slideshowBtn.classList.add('active');
         speedControl.style.display = 'block';
         scalingModeControl.style.display = 'block';
+        perLetterScalingControl.style.display = 'block';
         displayArea.classList.add('slideshow');
     }
-    
+
     if (displayArea.classList.contains('active')) {
         updateDisplay();
     }
@@ -267,13 +272,21 @@ function setScalingMode(mode) {
     if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
         const message = messageInput.value || 'OMELET';
         optimalFontSize = calculateOptimalFontSize(message);
-        updateSlideshowLetter(message);
+        renderSlideshow();
     }
 }
 
 fitBtn.addEventListener('click', () => setScalingMode('fit'));
 fillBtn.addEventListener('click', () => setScalingMode('fill'));
 balancedBtn.addEventListener('click', () => setScalingMode('balanced'));
+
+// Per-letter scaling checkbox
+perLetterScaling.addEventListener('change', () => {
+    if (currentMode === 'slideshow' && displayArea.classList.contains('active')) {
+        // Recalculate and re-render current letter
+        renderSlideshow();
+    }
+});
 
 // Color controls
 textColorInput.addEventListener('input', () => {
@@ -448,12 +461,25 @@ function renderSlideshow() {
     const vmin = Math.min(vw, vh);
     const vmax = Math.max(vw, vh);
 
-    const finalSize = optimalFontSize * fontSizeMultiplier;
-    const fontSizePx = optimalFontUnit === 'vmax'
+    // Calculate per-letter or use whole-message calculation
+    let letterOptimalSize, letterOptimalUnit;
+    if (perLetterScaling.checked) {
+        // Calculate optimal size for just this letter
+        letterOptimalSize = calculateOptimalFontSize(letter);
+        letterOptimalUnit = optimalFontUnit; // Set by calculateOptimalFontSize
+        log(`Per-letter scaling: "${letter}" gets its own calculation`);
+    } else {
+        // Use the pre-calculated size for the whole message
+        letterOptimalSize = optimalFontSize;
+        letterOptimalUnit = optimalFontUnit;
+    }
+
+    const finalSize = letterOptimalSize * fontSizeMultiplier;
+    const fontSizePx = letterOptimalUnit === 'vmax'
         ? (finalSize * vmax) / 100
         : (finalSize * vmin) / 100;
 
-    log(`Displaying "${letter}": ${finalSize.toFixed(2)}${optimalFontUnit} = ${fontSizePx.toFixed(2)}px (optimal: ${optimalFontSize.toFixed(2)}, multiplier: ${fontSizeMultiplier})`);
+    log(`Displaying "${letter}": ${finalSize.toFixed(2)}${letterOptimalUnit} = ${fontSizePx.toFixed(2)}px (optimal: ${letterOptimalSize.toFixed(2)}, multiplier: ${fontSizeMultiplier})`);
 
     const fontFamily = '-apple-system, "system-ui", "Segoe UI", Arial, sans-serif';
     const fontWeight = 'bold';
