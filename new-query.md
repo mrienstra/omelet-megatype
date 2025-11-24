@@ -1,3 +1,3 @@
-Perfect!
+Better!
 
-... Oh, except when "Independent H/V Scaling" is checked, changing the font size has no effect -- it should smoothly scale to what fraction of 100% you select (70 -> 70% of the 100 (100%) scale), like it does when "Independent H/V Scaling" is not checked.
+OK, it seems like "Independent H/V Scaling" always include "Per Letter Scaling" behavior, even if that checkbox is not checked -- can we allow "Independent H/V Scaling" without "Per Letter Scaling" behavior? If that makes sense, if not I can explain how I imagine it working.
