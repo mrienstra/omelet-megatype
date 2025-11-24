@@ -530,7 +530,7 @@ function prepareScrollCanvas() {
             maxHeight = Math.max(maxHeight, height);
         });
 
-        const baseScaleX = rect.height / maxWidth;
+        const baseScaleX = rect.width / maxWidth;
         const baseScaleY = rect.height / maxHeight;
         sharedScaleFactors = { scaleX: baseScaleX, scaleY: baseScaleY };
     }
@@ -570,7 +570,7 @@ function prepareScrollCanvas() {
                 scaleX = sharedScaleFactors.scaleX * fontSizeMultiplier;
                 scaleY = sharedScaleFactors.scaleY * fontSizeMultiplier;
             } else {
-                scaleX = (rect.height / charWidth) * fontSizeMultiplier;
+                scaleX = (rect.width / charWidth) * fontSizeMultiplier;
                 scaleY = (rect.height / charHeight) * fontSizeMultiplier;
             }
         } else {
