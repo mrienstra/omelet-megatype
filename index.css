@@ -160,12 +160,6 @@ input[type="range"] {
     height: 100%;
 }
 
-
-.close-btn {
-    /* Hidden - click anywhere on display area to return to controls */
-    display: none !important;
-}
-
 .nav-btn {
     width: 60px;
     height: 60px;
