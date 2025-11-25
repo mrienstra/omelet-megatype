@@ -1,4 +1,4 @@
-const CACHE_NAME = 'omelet-megatype-v2.2';
+const CACHE_NAME = 'omelet-megatype-v2.3';
 const urlsToCache = [
   '/',
   '/index.html',
