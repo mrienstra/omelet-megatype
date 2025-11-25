@@ -32,6 +32,9 @@ const independentScalingControl = document.getElementById('independentScalingCon
 const independentScaling = document.getElementById('independentScaling');
 const debugLogging = document.getElementById('debugLogging');
 
+// Config flags
+const DEBUG_SETTINGS_PERSISTENCE = false; // Set to true to debug localStorage save/load
+
 let currentMode = 'static';
 let currentLetterIndex = 0;
 let slideshowInterval = null;
@@ -299,7 +302,7 @@ letterSpacingSlider.addEventListener('input', () => {
 
 // Font selection
 fontSelect.addEventListener('change', () => {
-    console.log('Font changed to:', fontSelect.value);
+    if (DEBUG_SETTINGS_PERSISTENCE) console.log('Font changed to:', fontSelect.value);
     if (displayArea.classList.contains('active')) {
         // Recalculate optimal size for new font
         const message = messageInput.value || 'OMELET';
@@ -855,7 +858,7 @@ window.addEventListener('resize', () => {
 // LocalStorage persistence
 function saveSettings() {
     if (isLoadingSettings) {
-        console.log('Skipping save - currently loading settings');
+        if (DEBUG_SETTINGS_PERSISTENCE) console.log('Skipping save - currently loading settings');
         return; // Don't save while loading
     }
 
@@ -873,7 +876,7 @@ function saveSettings() {
         independentScaling: independentScaling.checked,
         debugLogging: debugLogging.checked
     };
-    console.log('Saving settings to localStorage:', settings);
+    if (DEBUG_SETTINGS_PERSISTENCE) console.log('Saving settings to localStorage:', settings);
     localStorage.setItem('omeletSettings', JSON.stringify(settings));
 }
 
