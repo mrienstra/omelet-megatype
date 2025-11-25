@@ -419,6 +419,12 @@ textColorInput.addEventListener('input', () => {
 });
 
 bgColorInput.addEventListener('input', () => {
+    // Update theme color for status bar
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+        themeColorMeta.setAttribute('content', bgColorInput.value);
+    }
+
     if (displayArea.classList.contains('active')) {
         // Re-render current mode
         if (currentMode === 'static') {
@@ -838,6 +844,12 @@ debugLogging.addEventListener('change', () => {
 // Load settings on startup (must be before setMode to avoid overwriting saved settings)
 loadSettings();
 
+// Initialize theme color to match background color
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+if (themeColorMeta) {
+    themeColorMeta.setAttribute('content', bgColorInput.value);
+}
+
 // Initialize with static mode (only if no saved mode was loaded)
 if (!localStorage.getItem('omeletSettings')) {
     setMode('static');
@@ -904,6 +916,11 @@ function loadSettings() {
         }
         if (settings.bgColor) {
             bgColorInput.value = settings.bgColor;
+            // Update theme color for status bar
+            const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+            if (themeColorMeta) {
+                themeColorMeta.setAttribute('content', settings.bgColor);
+            }
             console.log('Restored bg color:', settings.bgColor);
         }
         if (settings.speed) {
