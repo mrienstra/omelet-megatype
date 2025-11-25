@@ -148,6 +148,7 @@ input[type="range"] {
     /* padding: 20px; */
     word-wrap: break-word;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .display-area.active {
@@ -161,22 +162,8 @@ input[type="range"] {
 
 
 .close-btn {
-    position: fixed;
-    top: max(10px, env(safe-area-inset-top));
-    right: max(10px, env(safe-area-inset-right));
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.3);
-    color: white;
-    border: none;
-    font-size: 24px;
-    z-index: 1000;
-    display: none;
-}
-
-.display-area.active + .close-btn {
-    display: block;
+    /* Hidden - click anywhere on display area to return to controls */
+    display: none !important;
 }
 
 .nav-btn {

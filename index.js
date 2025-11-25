@@ -448,6 +448,14 @@ showBtn.addEventListener('click', () => {
 
 closeBtn.addEventListener('click', hideDisplay);
 
+// Click anywhere on display area to return to controls
+displayArea.addEventListener('click', (e) => {
+    // Only hide if clicking the display area itself, not its children
+    if (e.target === displayArea || e.target === displayCanvas) {
+        hideDisplay();
+    }
+});
+
 function showDisplay() {
     displayArea.classList.add('active');
     controls.style.display = 'none';
