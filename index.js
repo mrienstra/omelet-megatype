@@ -700,7 +700,7 @@ function renderScroll() {
 
     // Calculate scroll speed based on slider
     const speed = speedSlider.value;
-    const pixelsPerFrame = speed * 2; // Increased from 0.5 to 2 for faster scrolling
+    const pixelsPerFrame = speed;
 
     // Update scroll offset
     scrollOffset += pixelsPerFrame;
