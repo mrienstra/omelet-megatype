@@ -299,6 +299,7 @@ letterSpacingSlider.addEventListener('input', () => {
 
 // Font selection
 fontSelect.addEventListener('change', () => {
+    console.log('Font changed to:', fontSelect.value);
     if (displayArea.classList.contains('active')) {
         // Recalculate optimal size for new font
         const message = messageInput.value || 'OMELET';
@@ -831,8 +832,13 @@ debugLogging.addEventListener('change', () => {
     saveSettings();
 });
 
-// Initialize with static mode
-setMode('static');
+// Load settings on startup (must be before setMode to avoid overwriting saved settings)
+loadSettings();
+
+// Initialize with static mode (only if no saved mode was loaded)
+if (!localStorage.getItem('omeletSettings')) {
+    setMode('static');
+}
 
 // Debounced resize handler
 let resizeTimeout;
@@ -848,7 +854,10 @@ window.addEventListener('resize', () => {
 
 // LocalStorage persistence
 function saveSettings() {
-    if (isLoadingSettings) return; // Don't save while loading
+    if (isLoadingSettings) {
+        console.log('Skipping save - currently loading settings');
+        return; // Don't save while loading
+    }
 
     const settings = {
         message: messageInput.value,
@@ -864,46 +873,81 @@ function saveSettings() {
         independentScaling: independentScaling.checked,
         debugLogging: debugLogging.checked
     };
+    console.log('Saving settings to localStorage:', settings);
     localStorage.setItem('omeletSettings', JSON.stringify(settings));
 }
 
 function loadSettings() {
     const savedSettings = localStorage.getItem('omeletSettings');
-    if (!savedSettings) return;
+    if (!savedSettings) {
+        console.log('No saved settings found in localStorage');
+        return;
+    }
 
     try {
         isLoadingSettings = true; // Prevent saving during load
 
         const settings = JSON.parse(savedSettings);
+        console.log('Loading settings from localStorage:', settings);
 
         // Restore values
-        if (settings.message) messageInput.value = settings.message;
-        if (settings.textColor) textColorInput.value = settings.textColor;
-        if (settings.bgColor) bgColorInput.value = settings.bgColor;
+        if (settings.message) {
+            messageInput.value = settings.message;
+            console.log('Restored message:', settings.message);
+        }
+        if (settings.textColor) {
+            textColorInput.value = settings.textColor;
+            console.log('Restored text color:', settings.textColor);
+        }
+        if (settings.bgColor) {
+            bgColorInput.value = settings.bgColor;
+            console.log('Restored bg color:', settings.bgColor);
+        }
         if (settings.speed) {
             speedSlider.value = settings.speed;
             speedValue.textContent = settings.speed;
+            console.log('Restored speed:', settings.speed);
         }
         if (settings.fontSize) {
             fontSizeSlider.value = settings.fontSize;
             fontSizeValue.textContent = settings.fontSize;
+            console.log('Restored font size:', settings.fontSize);
         }
         if (settings.letterSpacing !== undefined) {
             letterSpacingSlider.value = settings.letterSpacing;
             letterSpacingValue.textContent = settings.letterSpacing;
+            console.log('Restored letter spacing:', settings.letterSpacing);
         }
-        if (settings.font) fontSelect.value = settings.font;
-        if (settings.scalingMode) setScalingMode(settings.scalingMode);
-        if (settings.perLetterScaling !== undefined) perLetterScaling.checked = settings.perLetterScaling;
-        if (settings.independentScaling !== undefined) independentScaling.checked = settings.independentScaling;
-        if (settings.debugLogging !== undefined) debugLogging.checked = settings.debugLogging;
-        if (settings.mode) setMode(settings.mode);
+        if (settings.font) {
+            fontSelect.value = settings.font;
+            console.log('Restored font:', settings.font);
+        }
+        if (settings.scalingMode) {
+            console.log('Restoring scaling mode:', settings.scalingMode);
+            setScalingMode(settings.scalingMode);
+        }
+        if (settings.perLetterScaling !== undefined) {
+            perLetterScaling.checked = settings.perLetterScaling;
+            console.log('Restored per-letter scaling:', settings.perLetterScaling);
+        }
+        if (settings.independentScaling !== undefined) {
+            independentScaling.checked = settings.independentScaling;
+            console.log('Restored independent scaling:', settings.independentScaling);
+        }
+        if (settings.debugLogging !== undefined) {
+            debugLogging.checked = settings.debugLogging;
+            console.log('Restored debug logging:', settings.debugLogging);
+        }
+        if (settings.mode) {
+            console.log('Restoring mode:', settings.mode);
+            setMode(settings.mode);
+        }
+
+        console.log('Settings loaded successfully');
     } catch (e) {
         console.error('Failed to load settings:', e);
     } finally {
         isLoadingSettings = false; // Re-enable saving
+        console.log('Finished loading settings, isLoadingSettings =', isLoadingSettings);
     }
 }
-
-// Load settings on startup
-loadSettings();
