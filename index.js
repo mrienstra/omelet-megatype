@@ -10,7 +10,6 @@ const bgColorInput = document.getElementById('bgColor');
 const speedSlider = document.getElementById('speedSlider');
 const speedValue = document.getElementById('speedValue');
 const showBtn = document.getElementById('showBtn');
-const closeBtn = document.getElementById('closeBtn');
 const controls = document.getElementById('controls');
 const speedControl = document.getElementById('speedControl');
 const fontSizeSlider = document.getElementById('fontSizeSlider');
@@ -445,8 +444,6 @@ showBtn.addEventListener('click', () => {
         showDisplay();
     }
 });
-
-closeBtn.addEventListener('click', hideDisplay);
 
 // Click anywhere on display area to return to controls
 displayArea.addEventListener('click', (e) => {
