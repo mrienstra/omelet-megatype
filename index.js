@@ -34,7 +34,7 @@ const debugLogging = document.getElementById('debugLogging');
 // Config flags
 const DEBUG_SETTINGS_PERSISTENCE = false; // Set to true to debug localStorage save/load
 
-let currentMode = 'static';
+let currentMode = 'scroll';
 let currentLetterIndex = 0;
 let slideshowInterval = null;
 let scrollAnimationId = null;
@@ -423,6 +423,7 @@ bgColorInput.addEventListener('input', () => {
     if (themeColorMeta) {
         themeColorMeta.setAttribute('content', bgColorInput.value);
     }
+    document.body.style.background = bgColorInput.value;
 
     if (displayArea.classList.contains('active')) {
         // Re-render current mode
@@ -854,10 +855,11 @@ const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 if (themeColorMeta) {
     themeColorMeta.setAttribute('content', bgColorInput.value);
 }
+document.body.style.background = bgColorInput.value;
 
-// Initialize with static mode (only if no saved mode was loaded)
+// Initialize with scroll mode (only if no saved mode was loaded)
 if (!localStorage.getItem('omeletSettings')) {
-    setMode('static');
+    setMode('scroll');
 }
 
 // Debounced resize handler
@@ -926,6 +928,7 @@ function loadSettings() {
             if (themeColorMeta) {
                 themeColorMeta.setAttribute('content', settings.bgColor);
             }
+            document.body.style.background = bgColorInput.value;
             console.log('Restored bg color:', settings.bgColor);
         }
         if (settings.speed) {
