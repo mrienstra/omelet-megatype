@@ -995,6 +995,27 @@ function loadSettings() {
     }
 }
 
+// Fetch and display version from service worker
+async function updateVersion() {
+    try {
+        const response = await fetch('/sw.js');
+        const swCode = await response.text();
+        // Extract version from CACHE_NAME (e.g., 'omelet-megatype-v2.6' -> 'v2.6')
+        const match = swCode.match(/CACHE_NAME\s*=\s*['"]omelet-megatype-(v[\d.]+)['"]/);
+        if (match) {
+            const versionElement = document.getElementById('version');
+            if (versionElement) {
+                versionElement.textContent = match[1]; // e.g., 'v2.6'
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch version:', error);
+    }
+}
+
+// Update version on load
+updateVersion();
+
 // Register service worker for offline support
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {

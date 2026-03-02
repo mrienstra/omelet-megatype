@@ -17,6 +17,13 @@ body {
     border-bottom: 2px solid #ddd;
 }
 
+.version {
+    position: absolute;
+    right: 1rem;
+    top: 0.5rem;
+    opacity: 0.5;
+}
+
 .control-group {
     margin-bottom: 12px;
 }
