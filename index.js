@@ -20,7 +20,8 @@ const letterSpacingValue = document.getElementById('letterSpacingValue');
 const fontSelect = document.getElementById('fontSelect');
 const measurementCanvas = document.createElement('canvas');
 const measurementCtx = measurementCanvas.getContext('2d');
-const scrollCanvas = document.createElement('canvas');
+const scrollViewport = document.getElementById('scrollViewport');
+const scrollCanvas = document.getElementById('scrollCanvas');
 const scrollCtx = scrollCanvas.getContext('2d');
 const scalingModeControl = document.getElementById('scalingModeControl');
 const fitBtn = document.getElementById('fitBtn');
@@ -54,7 +55,8 @@ function log(...args) {
 
 // Setup canvas with proper pixel density
 function setupCanvas() {
-    const dpr = window.devicePixelRatio || 1;
+    // Cap DPR at 2x for better performance (reduces pixel count by ~75% on 3x devices)
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const rect = displayCanvas.getBoundingClientRect();
 
     displayCanvas.width = rect.width * dpr;
@@ -62,7 +64,7 @@ function setupCanvas() {
 
     displayCtx.scale(dpr, dpr);
 
-    log(`Canvas setup: ${rect.width}x${rect.height} CSS, ${displayCanvas.width}x${displayCanvas.height} physical (DPR: ${dpr})`);
+    log(`Canvas setup: ${rect.width}x${rect.height} CSS, ${displayCanvas.width}x${displayCanvas.height} physical (DPR: ${dpr}, capped at 2x)`);
 }
 
 // Render text on canvas with perfect centering
@@ -411,8 +413,10 @@ textColorInput.addEventListener('input', () => {
             renderStatic(messageInput.value || 'OMELET');
         } else if (currentMode === 'slideshow') {
             renderSlideshow();
+        } else if (currentMode === 'scroll') {
+            // Re-render scroll canvas with new text color
+            prepareScrollCanvas();
         }
-        // Scroll mode continuously redraws, so no action needed
     }
     saveSettings();
 });
@@ -426,13 +430,17 @@ bgColorInput.addEventListener('input', () => {
     document.body.style.background = bgColorInput.value;
 
     if (displayArea.classList.contains('active')) {
+        // Update scroll viewport background color if in scroll mode
+        if (currentMode === 'scroll') {
+            scrollViewport.style.backgroundColor = bgColorInput.value;
+        }
         // Re-render current mode
         if (currentMode === 'static') {
             renderStatic(messageInput.value || 'OMELET');
         } else if (currentMode === 'slideshow') {
             renderSlideshow();
         }
-        // Scroll mode continuously redraws, so no action needed
+        // Scroll mode uses CSS transform, background already updated above
     }
     saveSettings();
 });
@@ -493,13 +501,24 @@ function updateDisplay() {
     setupCanvas();
 
     if (currentMode === 'static') {
+        // Show displayCanvas, hide scrollViewport
+        displayCanvas.style.display = 'block';
+        scrollViewport.classList.remove('active');
         renderStatic(message);
     } else if (currentMode === 'scroll') {
+        // Show scrollViewport, hide displayCanvas
+        displayCanvas.style.display = 'none';
+        scrollViewport.classList.add('active');
+        // Set background color for scroll viewport
+        scrollViewport.style.backgroundColor = bgColorInput.value;
         optimalFontSize = calculateOptimalFontSize(message);
         scrollOffset = 0;
         prepareScrollCanvas();
         renderScroll();
     } else if (currentMode === 'slideshow') {
+        // Show displayCanvas, hide scrollViewport
+        displayCanvas.style.display = 'block';
+        scrollViewport.classList.remove('active');
         optimalFontSize = calculateOptimalFontSize(message);
         currentLetterIndex = 0;
         renderSlideshow();
@@ -544,8 +563,9 @@ function prepareScrollCanvas() {
     const vh = window.innerHeight;
     const vmin = Math.min(vw, vh);
     const vmax = Math.max(vw, vh);
-    const rect = displayCanvas.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
+    const rect = scrollViewport.getBoundingClientRect();
+    // Cap DPR at 2x for better performance
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     // Calculate message-wide scale factors if needed (for independent scaling without per-letter)
     let sharedScaleFactors = null;
@@ -637,8 +657,10 @@ function prepareScrollCanvas() {
         totalWidth += scaledWidth + letterSpacing;
     });
 
-    // Set up scroll canvas size
-    scrollCanvas.width = (totalWidth + rect.width) * dpr;
+    // Set up scroll canvas size - render text twice for seamless looping
+    // Canvas width: (totalWidth * 2) to fit two copies side-by-side
+    const canvasWidth = totalWidth * 2;
+    scrollCanvas.width = canvasWidth * dpr;
     scrollCanvas.height = rect.height * dpr;
 
     // Reset transform and apply DPR scaling
@@ -646,59 +668,49 @@ function prepareScrollCanvas() {
     scrollCtx.scale(dpr, dpr);
 
     // Clear scroll canvas
-    scrollCtx.clearRect(0, 0, totalWidth + rect.width, rect.height);
+    scrollCtx.clearRect(0, 0, canvasWidth, rect.height);
 
-    // Render all characters to scroll canvas
-    charData.forEach(data => {
-        scrollCtx.save();
+    // Helper function to render all characters at a given offset
+    const renderCharactersAtOffset = (xOffset) => {
+        charData.forEach(data => {
+            scrollCtx.save();
 
-        const translateY = rect.height / 2;
-        scrollCtx.translate(data.x, translateY);
-        scrollCtx.scale(data.scaleX, data.scaleY);
+            const translateY = rect.height / 2;
+            scrollCtx.translate(data.x + xOffset, translateY);
+            scrollCtx.scale(data.scaleX, data.scaleY);
 
-        scrollCtx.font = `${fontWeight} ${data.fontSizePx}px ${fontFamily}`;
-        scrollCtx.fillStyle = textColorInput.value;
-        scrollCtx.textBaseline = 'alphabetic';
+            scrollCtx.font = `${fontWeight} ${data.fontSizePx}px ${fontFamily}`;
+            scrollCtx.fillStyle = textColorInput.value;
+            scrollCtx.textBaseline = 'alphabetic';
 
-        // Position text: left edge at x=0, vertically centered at y=0
-        // For x: we want the left edge of the bounding box at 0
-        const x = data.metrics.actualBoundingBoxLeft;
+            // Position text: left edge at x=0, vertically centered at y=0
+            const x = data.metrics.actualBoundingBoxLeft;
+            const y = (data.metrics.actualBoundingBoxAscent - data.metrics.actualBoundingBoxDescent) / 2;
 
-        // For y: we've already translated to the vertical center, so we need the baseline position
-        // that centers the text at y=0
-        // Top of text: y - ascent, Bottom: y + descent
-        // For center at 0: (y - ascent + y + descent) / 2 = 0
-        // So: y = (ascent - descent) / 2
-        const y = (data.metrics.actualBoundingBoxAscent - data.metrics.actualBoundingBoxDescent) / 2;
+            scrollCtx.fillText(data.char, x, y);
 
-        scrollCtx.fillText(data.char, x, y);
+            scrollCtx.restore();
+        });
+    };
 
-        scrollCtx.restore();
-    });
+    // Render text twice for seamless looping
+    renderCharactersAtOffset(0);          // First copy
+    renderCharactersAtOffset(totalWidth);  // Second copy
+
+    // Store total width for loop detection in renderScroll
+    scrollTotalWidth = totalWidth;
+
+    // Set canvas CSS dimensions to match actual size
+    scrollCanvas.style.width = `${canvasWidth}px`;
+    scrollCanvas.style.height = `${rect.height}px`;
 
     return totalWidth;
 }
 
+// Store total width for loop detection
+let scrollTotalWidth = 0;
+
 function renderScroll() {
-    const rect = displayCanvas.getBoundingClientRect();
-    const bgColor = bgColorInput.value;
-    const dpr = window.devicePixelRatio || 1;
-
-    // Clear display canvas
-    displayCtx.fillStyle = bgColor;
-    displayCtx.fillRect(0, 0, rect.width, rect.height);
-
-    // Draw scroll canvas at offset
-    // Start text from the right side of the screen and scroll left
-    // Specify destination dimensions in CSS pixels to account for DPR scaling on displayCtx
-    const scrollCanvasWidthCSS = scrollCanvas.width / dpr;
-    const scrollCanvasHeightCSS = scrollCanvas.height / dpr;
-    displayCtx.drawImage(
-        scrollCanvas,
-        rect.width - scrollOffset, 0,  // destination x, y in CSS space
-        scrollCanvasWidthCSS, scrollCanvasHeightCSS  // destination width, height in CSS space
-    );
-
     // Calculate scroll speed based on slider
     const speed = speedSlider.value;
     const pixelsPerFrame = speed * 1.0;
@@ -706,11 +718,14 @@ function renderScroll() {
     // Update scroll offset
     scrollOffset += pixelsPerFrame;
 
-    // Reset when text has scrolled off screen
-    const totalWidth = scrollCanvas.width / (window.devicePixelRatio || 1);
-    if (scrollOffset > totalWidth) {
-        scrollOffset = 0;
+    // Reset when first copy has scrolled off screen (seamless loop to second copy)
+    if (scrollOffset >= scrollTotalWidth) {
+        scrollOffset -= scrollTotalWidth;
     }
+
+    // Apply CSS transform for GPU-accelerated scrolling
+    // Use translate3d for GPU acceleration (move left by scrollOffset)
+    scrollCanvas.style.transform = `translate3d(-${scrollOffset}px, 0, 0)`;
 
     // Continue animation
     scrollAnimationId = requestAnimationFrame(renderScroll);

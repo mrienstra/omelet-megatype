@@ -156,6 +156,29 @@ input[type="range"] {
     height: 100%;
 }
 
+.scroll-viewport {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    display: none;
+}
+
+.scroll-viewport.active {
+    display: block;
+}
+
+#scrollCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    /* GPU acceleration hints */
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+}
+
 .nav-btn {
     width: 60px;
     height: 60px;
