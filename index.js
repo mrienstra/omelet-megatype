@@ -457,7 +457,7 @@ showBtn.addEventListener('click', () => {
 // Click anywhere on display area to return to controls
 displayArea.addEventListener('click', (e) => {
     // Only hide if clicking the display area itself, not its children
-    if (e.target === displayArea || e.target === displayCanvas) {
+    if (e.target === displayArea || e.target === displayCanvas || e.target === scrollViewport || e.target === scrollCanvas) {
         hideDisplay();
     }
 });
