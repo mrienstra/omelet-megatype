@@ -9,29 +9,45 @@ const urlsToCache = [
 
 // Install event - cache files
 self.addEventListener('install', event => {
+  console.log('Service Worker: Installing version', CACHE_NAME);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Service Worker: Caching files');
         return cache.addAll(urlsToCache);
       })
-      .then(() => self.skipWaiting())
+      .then(() => {
+        console.log('Service Worker: Skip waiting and activate immediately');
+        return self.skipWaiting();
+      })
   );
+});
+
+// Listen for messages from the page (e.g., to force skip waiting)
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('Service Worker: Received SKIP_WAITING message');
+    self.skipWaiting();
+  }
 });
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
+  console.log('Service Worker: Activating version', CACHE_NAME);
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker: Clearing old cache');
+            console.log('Service Worker: Clearing old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      console.log('Service Worker: Claiming clients');
+      return self.clients.claim();
+    })
   );
 });
 

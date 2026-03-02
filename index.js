@@ -1016,15 +1016,49 @@ async function updateVersion() {
 // Update version on load
 updateVersion();
 
-// Register service worker for offline support
+// Register service worker for offline support and handle updates
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
             .then(registration => {
                 console.log('Service Worker registered successfully:', registration.scope);
+
+                // Check for updates every 60 seconds (when page is visible)
+                setInterval(() => {
+                    if (document.visibilityState === 'visible') {
+                        registration.update();
+                    }
+                }, 60000);
+
+                // Handle service worker updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    console.log('Service Worker: Update found');
+
+                    newWorker.addEventListener('statechange', () => {
+                        // When the new service worker is activated, reload the page
+                        if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                            console.log('Service Worker: New version activated, reloading...');
+                            // Give it a moment for the new SW to take control
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 100);
+                        }
+                    });
+                });
             })
             .catch(error => {
                 console.log('Service Worker registration failed:', error);
             });
+
+        // Listen for controller change (when new service worker takes over)
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                refreshing = true;
+                console.log('Service Worker: Controller changed, reloading...');
+                window.location.reload();
+            }
+        });
     });
 }
